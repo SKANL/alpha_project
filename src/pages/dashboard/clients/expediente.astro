@@ -1,0 +1,433 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Navigation from "../../../components/Navigation.astro";
+import { supabase } from "../../../lib/supabase";
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/signin");
+}
+
+const session = await supabase.auth.setSession({
+  refresh_token: refreshToken.value,
+  access_token: accessToken.value,
+});
+
+if (session.error || !session.data.user) {
+  return Astro.redirect("/signin");
+}
+
+const clientId = Astro.url.searchParams.get("id");
+if (!clientId) {
+  return Astro.redirect("/dashboard/clients");
+}
+
+const user = session.data.user;
+
+const { data: client } = await supabase
+  .from("clients")
+  .select("*")
+  .eq("id", clientId)
+  .eq("user_id", user.id)
+  .single();
+
+if (!client) {
+  return Astro.redirect("/dashboard/clients");
+}
+
+const { data: documents } = await supabase
+  .from("client_documents")
+  .select("*")
+  .eq("client_id", clientId);
+
+const { data: answers } = await supabase
+  .from("client_answers")
+  .select(`
+    *,
+    questions (
+      question_text,
+      order_index
+    )
+  `)
+  .eq("client_id", clientId)
+  .order("questions(order_index)");
+---
+
+<Layout title={`Expediente: ${client.client_name}`}>
+  <div class="dashboard-container">
+    <Navigation currentPage="clients" />
+    
+    <main class="dashboard-main">
+      <div class="page-header">
+        <h1 class="page-title">Expediente: {client.client_name}</h1>
+        <p class="page-subtitle">{client.case_name}</p>
+      </div>
+
+      <div class="action-bar">
+        <a href="/dashboard/clients" class="back-link">
+          Volver a Clientes
+        </a>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="contract">Contrato Firmado</button>
+        <button class="tab-btn" data-tab="documents">Documentos</button>
+        <button class="tab-btn" data-tab="hechos">Hechos</button>
+      </div>
+
+      <div id="contract" class="tab-content active">
+        <div class="content-section">
+          <h2 class="section-title">Contrato Firmado</h2>
+          
+          {client.signature_data ? (
+            <>
+              <div class="signature-section">
+                <h3 class="subsection-label">Firma Digital</h3>
+                <div class="signature-display">
+                  <img src={client.signature_data} alt="Firma" class="signature-image" />
+                </div>
+              </div>
+
+              <div class="evidence-box">
+                <h3 class="subsection-label">Sello de Evidencia</h3>
+                <div class="evidence-item">
+                  <span class="evidence-label">Timestamp</span>
+                  <span class="evidence-value">{new Date(client.signature_timestamp!).toLocaleString('es-MX')}</span>
+                </div>
+                <div class="evidence-item">
+                  <span class="evidence-label">IP Address</span>
+                  <span class="evidence-value">{client.signature_ip}</span>
+                </div>
+                <div class="evidence-item">
+                  <span class="evidence-label">Hash (SHA-256)</span>
+                  <code class="evidence-hash">{client.signature_hash}</code>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p class="empty-message">El contrato aún no ha sido firmado.</p>
+          )}
+        </div>
+      </div>
+
+      <div id="documents" class="tab-content">
+        <div class="content-section">
+          <h2 class="section-title">Documentos Subidos</h2>
+          
+          {documents && documents.length > 0 ? (
+            <div class="documents-list">
+              {documents.map((doc) => (
+                <div class="document-item">
+                  <div class="document-info">
+                    <h3 class="document-type">{doc.document_type.replace('_', ' ').toUpperCase()}</h3>
+                    <p class="document-date">{new Date(doc.uploaded_at).toLocaleDateString('es-MX')}</p>
+                  </div>
+                  <a href={doc.file_url} target="_blank" class="action-link">
+                    Descargar
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="empty-message">No hay documentos subidos aún.</p>
+          )}
+        </div>
+      </div>
+
+      <div id="hechos" class="tab-content">
+        <div class="content-section">
+          <h2 class="section-title">Respuestas del Cuestionario</h2>
+          
+          {answers && answers.length > 0 ? (
+            <div class="answers-list">
+              {answers.map((answer: any) => (
+                <div class="answer-item">
+                  <h3 class="answer-question">{answer.questions.question_text}</h3>
+                  <p class="answer-text">{answer.answer_text}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="empty-message">No hay respuestas aún.</p>
+          )}
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    background: #0a0a0a;
+  }
+
+  .dashboard-main {
+    flex: 1;
+    margin-left: 240px;
+    padding: 4rem 6rem;
+  }
+
+  .page-header {
+    margin-bottom: 3rem;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .action-bar {
+    margin-bottom: 2rem;
+  }
+
+  .back-link {
+    font-size: 0.8125rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .back-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .tab-btn {
+    padding: 1rem 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: -1px;
+  }
+
+  .tab-btn:hover {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .tab-btn.active {
+    color: rgba(255, 255, 255, 0.95);
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  .content-section {
+    padding: 2rem 0;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 3rem;
+  }
+
+  .subsection-label {
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1.5rem;
+  }
+
+  .signature-section {
+    margin-bottom: 3rem;
+  }
+
+  .signature-display {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    padding: 2rem;
+    display: inline-block;
+  }
+
+  .signature-image {
+    max-width: 300px;
+    display: block;
+  }
+
+  .evidence-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    padding: 2rem;
+  }
+
+  .evidence-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .evidence-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .evidence-label {
+    font-size: 0.6875rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .evidence-value {
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .evidence-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.02em;
+    word-break: break-all;
+    line-height: 1.6;
+  }
+
+  .documents-list {
+    display: grid;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .document-item {
+    background: #0a0a0a;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.2s ease;
+  }
+
+  .document-item:hover {
+    background: rgba(255, 255, 255, 0.01);
+  }
+
+  .document-info {
+    flex: 1;
+  }
+
+  .document-type {
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0.25rem;
+  }
+
+  .document-date {
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .action-link {
+    font-size: 0.8125rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .action-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .answers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .answer-item {
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .answer-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .answer-question {
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+  }
+
+  .answer-text {
+    font-size: 0.875rem;
+    font-weight: 300;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .empty-message {
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.3);
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+</style>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-btn');
+  const contents = document.querySelectorAll('.tab-content');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = (tab as HTMLElement).dataset.tab;
+
+      tabs.forEach((t) => t.classList.remove('active'));
+      contents.forEach((c) => c.classList.remove('active'));
+
+      tab.classList.add('active');
+      document.getElementById(target!)?.classList.add('active');
+    });
+  });
+</script>

@@ -1,0 +1,541 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const { token } = Astro.params;
+
+if (!token) {
+  return Astro.redirect("/");
+}
+---
+
+<Layout title="Bienvenida">
+  <div id="app" class="welcome-container">
+    <div id="loading" class="loading-screen">
+      <div class="loader"></div>
+      <p>Cargando...</p>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div id="step1" class="step" style="display: none;">
+      <div class="step-content">
+        <div id="firmLogo" class="firm-logo"></div>
+        <div class="form-header">
+          <h1 id="firmName">Bienvenido</h1>
+          <p>Estamos listos para atenderte</p>
+        </div>
+        <div class="form-divider"></div>
+        <p class="welcome-text">
+          Te guiaremos paso a paso para completar tu proceso de incorporación.
+          Solo tomará unos minutos.
+        </p>
+        <button class="btn-primary" onclick="nextStep(2)">
+          Comenzar
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Contract -->
+    <div id="step2" class="step" style="display: none;">
+      <div class="step-content">
+        <div class="form-header">
+          <h1>Contrato</h1>
+          <p>Lee y firma el contrato</p>
+        </div>
+        <div class="form-divider"></div>
+        
+        <div class="contract-viewer">
+          <iframe id="contractFrame" style="width: 100%; height: 400px; border: 1px solid var(--border-dark); border-radius: 0.375rem;"></iframe>
+        </div>
+
+        <div class="signature-section">
+          <label>Tu Firma Digital</label>
+          <canvas id="signatureCanvas" width="400" height="150"></canvas>
+          <button type="button" class="btn-secondary" onclick="clearSignature()">
+            Limpiar
+          </button>
+        </div>
+
+        <button class="btn-primary" onclick="signContract()" disabled id="signBtn">
+          Aceptar y Firmar
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3: Documents -->
+    <div id="step3" class="step" style="display: none;">
+      <div class="step-content">
+        <div class="form-header">
+          <h1>Documentos</h1>
+          <p>Sube los documentos solicitados</p>
+        </div>
+        <div class="form-divider"></div>
+        
+        <div id="documentsContainer" class="documents-container"></div>
+
+        <button class="btn-primary" onclick="nextStep(4)">
+          Continuar
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Questionnaire -->
+    <div id="step4" class="step" style="display: none;">
+      <div class="step-content">
+        <div class="form-header">
+          <h1>Cuestionario</h1>
+          <p>Comparte los detalles de tu caso</p>
+        </div>
+        <div class="form-divider"></div>
+        
+        <form id="questionnaireForm" class="questionnaire-form"></form>
+
+        <button class="btn-primary" onclick="submitQuestionnaire()">
+          Enviar Respuestas
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 5: Complete -->
+    <div id="step5" class="step" style="display: none;">
+      <div class="step-content">
+        <div class="form-header">
+          <h1>¡Perfecto!</h1>
+          <p>Hemos recibido todo</p>
+        </div>
+        <div class="form-divider"></div>
+        
+        <div class="success-message">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">✓</div>
+          <p style="margin-bottom: 1.5rem;">
+            Tu información ha sido recibida exitosamente. Pronto nos pondremos en contacto contigo.
+          </p>
+        </div>
+
+        <div id="calendarSection" style="display: none;">
+          <div class="form-divider"></div>
+          <h2 style="font-size: 1.25rem; margin-bottom: 1rem;">Agenda tu primera reunión</h2>
+          <a id="calendarLink" href="#" target="_blank" class="btn-primary">
+            📅 Agendar Reunión
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Screen -->
+    <div id="errorScreen" class="error-screen" style="display: none;">
+      <div class="form-header">
+        <h1>⚠️ Error</h1>
+        <p id="errorMessage">Este link no es válido o ya fue utilizado.</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .welcome-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .loading-screen, .error-screen {
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .loader {
+    border: 4px solid var(--border-dark);
+    border-top: 4px solid var(--accent-light);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .step {
+    width: 100%;
+    max-width: 600px;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .firm-logo {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .firm-logo img {
+    max-width: 200px;
+    max-height: 80px;
+    object-fit: contain;
+  }
+
+  .welcome-text {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-dark-secondary);
+    text-align: center;
+  }
+
+  .contract-viewer {
+    margin: 1.5rem 0;
+  }
+
+  .signature-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .signature-section label {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-dark-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  #signatureCanvas {
+    border: 1px solid var(--border-dark);
+    border-radius: 0.375rem;
+    background: white;
+    cursor: crosshair;
+    width: 100%;
+    max-width: 400px;
+    height: 150px;
+  }
+
+  .documents-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .document-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .document-upload label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-dark-primary);
+  }
+
+  .document-upload input[type="file"] {
+    padding: 0.75rem;
+    border: 1px solid var(--border-dark);
+    border-radius: 0.375rem;
+    background: var(--bg-dark-card);
+    color: var(--text-dark-primary);
+    font-size: 0.875rem;
+  }
+
+  .questionnaire-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .question-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .question-field label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-dark-primary);
+  }
+
+  .question-field textarea {
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-dark);
+    border-radius: 0.375rem;
+    background: var(--bg-dark-card);
+    color: var(--text-dark-primary);
+    font-family: inherit;
+    font-size: 0.875rem;
+    resize: vertical;
+  }
+
+  .success-message {
+    text-align: center;
+    padding: 2rem 0;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+</style>
+
+<script define:vars={{ token }}>
+  let portalData = null;
+  let canvas, ctx;
+  let isDrawing = false;
+
+  async function loadPortalData() {
+    try {
+      const response = await fetch(`/api/portal/validate?token=${token}`);
+      if (!response.ok) {
+        showError();
+        return;
+      }
+      
+      portalData = await response.json();
+      initializePortal();
+    } catch (error) {
+      showError();
+    }
+  }
+
+  function initializePortal() {
+    document.getElementById('loading').style.display = 'none';
+    
+    // Set firm info
+    if (portalData.profile.firm_logo_url) {
+      document.getElementById('firmLogo').innerHTML = 
+        `<img src="${portalData.profile.firm_logo_url}" alt="Logo" />`;
+    }
+    document.getElementById('firmName').textContent = 
+      portalData.profile.firm_name || 'Bienvenido';
+    
+    // Show step 1
+    document.getElementById('step1').style.display = 'flex';
+    
+    // Setup signature canvas
+    setupSignatureCanvas();
+  }
+
+  function setupSignatureCanvas() {
+    canvas = document.getElementById('signatureCanvas');
+    ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      isDrawing = true;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      document.getElementById('signBtn').disabled = false;
+    });
+
+    canvas.addEventListener('touchend', () => {
+      isDrawing = false;
+    });
+  }
+
+  function startDrawing(e) {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  function draw(e) {
+    if (!isDrawing) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+    document.getElementById('signBtn').disabled = false;
+  }
+
+  function stopDrawing() {
+    isDrawing = false;
+  }
+
+  window.clearSignature = function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('signBtn').disabled = true;
+  };
+
+  window.nextStep = function(stepNumber) {
+    document.querySelectorAll('.step').forEach(s => s.style.display = 'none');
+    document.getElementById(`step${stepNumber}`).style.display = 'flex';
+
+    if (stepNumber === 2) {
+      // Load contract
+      document.getElementById('contractFrame').src = portalData.contract_template.file_url;
+    } else if (stepNumber === 3) {
+      // Load documents
+      const container = document.getElementById('documentsContainer');
+      container.innerHTML = '';
+      portalData.client.required_documents.forEach(docType => {
+        const div = document.createElement('div');
+        div.className = 'document-upload';
+        div.innerHTML = `
+          <label>${docType.replace('_', ' ').toUpperCase()}</label>
+          <input type="file" data-doctype="${docType}" class="doc-input" accept="image/*,application/pdf" />
+          <span class="upload-status"></span>
+        `;
+        container.appendChild(div);
+      });
+
+      // Setup file upload
+      document.querySelectorAll('.doc-input').forEach(input => {
+        input.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          const docType = e.target.dataset.doctype;
+          const formData = new FormData();
+          formData.append('token', token);
+          formData.append('document_type', docType);
+          formData.append('file', file);
+
+          const status = e.target.parentElement.querySelector('.upload-status');
+          status.textContent = 'Subiendo...';
+
+          try {
+            const response = await fetch('/api/portal/upload-document', {
+              method: 'POST',
+              body: formData,
+            });
+            if (response.ok) {
+              status.textContent = '✓ Subido';
+              status.style.color = '#22c55e';
+            } else {
+              status.textContent = '✗ Error';
+              status.style.color = '#ef4444';
+            }
+          } catch (error) {
+            status.textContent = '✗ Error';
+            status.style.color = '#ef4444';
+          }
+        });
+      });
+    } else if (stepNumber === 4) {
+      // Load questionnaire
+      const form = document.getElementById('questionnaireForm');
+      form.innerHTML = '';
+      portalData.questionnaire.questions
+        .sort((a, b) => a.order_index - b.order_index)
+        .forEach(question => {
+          const div = document.createElement('div');
+          div.className = 'question-field';
+          div.innerHTML = `
+            <label>${question.question_text}</label>
+            <textarea data-qid="${question.id}" required></textarea>
+          `;
+          form.appendChild(div);
+        });
+    }
+  };
+
+  window.signContract = async function() {
+    const signatureData = canvas.toDataURL();
+    
+    try {
+      const response = await fetch('/api/portal/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          signature_data: signatureData,
+          ip_address: 'client-ip', // In production, get from server
+        }),
+      });
+
+      if (response.ok) {
+        nextStep(3);
+      } else {
+        alert('Error al firmar el contrato');
+      }
+    } catch (error) {
+      alert('Error al firmar el contrato');
+    }
+  };
+
+  window.submitQuestionnaire = async function() {
+    const textareas = document.querySelectorAll('#questionnaireForm textarea');
+    const answers = Array.from(textareas).map(ta => ({
+      question_id: ta.dataset.qid,
+      answer_text: ta.value,
+    }));
+
+    try {
+      const response = await fetch('/api/portal/submit-answers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, answers }),
+      });
+
+      if (response.ok) {
+        await completeProcess();
+      } else {
+        alert('Error al enviar respuestas');
+      }
+    } catch (error) {
+      alert('Error al enviar respuestas');
+    }
+  };
+
+  async function completeProcess() {
+    try {
+      await fetch('/api/portal/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+
+      // Show calendar link if available
+      if (portalData.profile.calendar_link) {
+        document.getElementById('calendarSection').style.display = 'block';
+        document.getElementById('calendarLink').href = portalData.profile.calendar_link;
+      }
+
+      nextStep(5);
+    } catch (error) {
+      alert('Error al completar el proceso');
+    }
+  }
+
+  function showError() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorScreen').style.display = 'block';
+  }
+
+  // Initialize
+  loadPortalData();
+</script>

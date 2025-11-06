@@ -1,0 +1,214 @@
+---
+interface Props {
+  currentPage?: string;
+}
+
+import { supabase } from "../lib/supabase";
+
+const { currentPage = "" } = Astro.props;
+
+// Try to load profile server-side so the sidebar can display firm name/logo globally
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+let profile: any = null;
+if (accessToken && refreshToken) {
+  try {
+    const { data } = await supabase.auth.setSession({
+      access_token: accessToken.value,
+      refresh_token: refreshToken.value,
+    });
+    const user = data?.user;
+    if (user) {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      profile = p;
+    }
+  } catch (e) {
+    // ignore - fallback to defaults
+    profile = null;
+  }
+}
+---
+
+<nav class="sidebar">
+  <div class="sidebar-header">
+    {profile?.firm_logo_url ? (
+      <div class="logo-preview">
+        <img src={profile.firm_logo_url} alt={profile.firm_name || 'Logo'} />
+      </div>
+    ) : (
+      <div class="logo-mark"></div>
+    )}
+
+    <h1 class="logo-text">{profile?.firm_name || 'LEGAL STUDIO'}</h1>
+  </div>
+
+  <div class="nav-section">
+    <a
+      href="/dashboard"
+      class={`nav-item ${currentPage === "dashboard" ? "active" : ""}`}
+    >
+      <span class="nav-label">Panel</span>
+    </a>
+
+    <a
+      href="/dashboard/profile"
+      class={`nav-item ${currentPage === "profile" ? "active" : ""}`}
+    >
+      <span class="nav-label">Despacho</span>
+    </a>
+
+    <a
+      href="/dashboard/clients"
+      class={`nav-item ${currentPage === "clients" ? "active" : ""}`}
+    >
+      <span class="nav-label">Clientes</span>
+    </a>
+
+    <a
+      href="/dashboard/templates/contracts"
+      class={`nav-item ${currentPage === "contracts" ? "active" : ""}`}
+    >
+      <span class="nav-label">Contratos</span>
+    </a>
+
+    <a
+      href="/dashboard/templates/questionnaires"
+      class={`nav-item ${currentPage === "questionnaires" ? "active" : ""}`}
+    >
+      <span class="nav-label">Cuestionarios</span>
+    </a>
+  </div>
+
+  <form action="/api/auth/signout" method="post" class="sidebar-footer">
+    <button type="submit" class="nav-item logout">
+      <span class="nav-label">Salir</span>
+    </button>
+  </form>
+</nav>
+
+<style>
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 240px;
+    height: 100vh;
+    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 3rem 2rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #fff 0%, #999 100%);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+
+  .logo-preview img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    display: block;
+    margin-bottom: 1rem;
+    border-radius: 2px;
+    background: #fff;
+  }
+
+  .logo-text {
+    font-size: 0.875rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+  }
+
+  .nav-section {
+    flex: 1;
+    padding: 3rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .nav-item {
+    position: relative;
+    display: block;
+    padding: 1rem 2rem;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 0;
+    background: #fff;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nav-item:hover::before {
+    height: 24px;
+  }
+
+  .nav-item.active::before {
+    height: 32px;
+  }
+
+  .nav-label {
+    font-size: 0.875rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+    transition: color 0.3s ease;
+  }
+
+  .nav-item:hover .nav-label {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .nav-item.active .nav-label {
+    color: #fff;
+    font-weight: 400;
+  }
+
+  .sidebar-footer {
+    padding: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .nav-item.logout {
+    padding: 1rem 0;
+  }
+
+  .nav-item.logout .nav-label {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .nav-item.logout:hover .nav-label {
+    color: rgba(239, 68, 68, 0.8);
+  }
+</style>
