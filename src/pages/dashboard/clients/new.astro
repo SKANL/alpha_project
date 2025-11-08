@@ -1,7 +1,7 @@
 ---
-import Layout from "../../../layouts/Layout.astro";
-import Navigation from "../../../components/Navigation.astro";
-import { supabase } from "../../../lib/supabase";
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import { supabase } from "@/lib/supabase";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -158,113 +158,11 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
 </Layout>
 
 <style>
-  .dashboard-container {
-    display: flex;
-    min-height: 100vh;
-    background: #0a0a0a;
-  }
-
-  .dashboard-main {
-    flex: 1;
-    margin-left: 240px;
-    padding: 4rem 6rem;
-  }
-
-  .page-header {
-    margin-bottom: 3rem;
-  }
-
-  .page-title {
-    font-size: 2rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0.5rem;
-  }
-
-  .page-subtitle {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
-  .warning-banner {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 193, 7, 0.2);
-    border-radius: 2px;
-    padding: 2rem;
-    margin-bottom: 3rem;
-  }
-
-  .warning-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 193, 7, 0.9);
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
-  }
-
-  .warning-actions {
-    display: flex;
-    gap: 2rem;
-  }
-
-  .form-container {
-    max-width: 600px;
-  }
-
+  /* Estilos específicos de new.astro */
   .client-form {
     display: flex;
     flex-direction: column;
     gap: 2.5rem;
-  }
-
-  .form-row {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .form-label {
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 1rem;
-  }
-
-  .form-input,
-  .form-select {
-    width: 100%;
-    padding: 1rem 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1rem;
-    font-weight: 300;
-    transition: border-color 0.3s ease;
-  }
-
-  .form-input:focus,
-  .form-select:focus {
-    outline: none;
-    border-bottom-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .form-input::placeholder {
-    color: rgba(255, 255, 255, 0.25);
-  }
-
-  .form-select {
-    cursor: pointer;
-  }
-
-  .form-select option {
-    background: #0a0a0a;
-    color: rgba(255, 255, 255, 0.9);
-    padding: 1rem;
   }
 
   .checkbox-group {
@@ -299,32 +197,6 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
     color: rgba(255, 255, 255, 0.9);
   }
 
-  .primary-action {
-    padding: 1rem 2rem;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 2px;
-    margin-top: 1rem;
-  }
-
-  .primary-action:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .primary-action:disabled {
-    border-color: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.2);
-    cursor: not-allowed;
-  }
-
   .action-link {
     font-size: 0.8125rem;
     font-weight: 300;
@@ -335,40 +207,6 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
 
   .action-link:hover {
     color: rgba(255, 193, 7, 1);
-  }
-
-  .modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .modal.active {
-    display: flex;
-  }
-
-  .modal-content {
-    background: #0a0a0a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-    padding: 3rem;
-    max-width: 600px;
-    width: 90%;
-  }
-
-  .modal-title {
-    font-size: 1.25rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 1.5rem;
   }
 
   .modal-description {
@@ -396,45 +234,9 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
     letter-spacing: 0.02em;
   }
 
-  .modal-footer {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-  }
-
   .modal-btn {
-    padding: 0.75rem 2rem;
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 2px;
     text-decoration: none;
     display: inline-block;
-  }
-
-  .modal-btn.primary {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .modal-btn.primary:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-
-  .modal-btn.secondary {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .modal-btn.secondary:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.7);
   }
 </style>
 

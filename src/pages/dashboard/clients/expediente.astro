@@ -1,7 +1,7 @@
 ---
-import Layout from "../../../layouts/Layout.astro";
-import Navigation from "../../../components/Navigation.astro";
-import { supabase } from "../../../lib/supabase";
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import { supabase } from "@/lib/supabase";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -159,37 +159,7 @@ const { data: answers } = await supabase
 </Layout>
 
 <style>
-  .dashboard-container {
-    display: flex;
-    min-height: 100vh;
-    background: #0a0a0a;
-  }
-
-  .dashboard-main {
-    flex: 1;
-    margin-left: 240px;
-    padding: 4rem 6rem;
-  }
-
-  .page-header {
-    margin-bottom: 3rem;
-  }
-
-  .page-title {
-    font-size: 2rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0.5rem;
-  }
-
-  .page-subtitle {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
+  /* Estilos específicos de expediente.astro */
   .action-bar {
     margin-bottom: 2rem;
   }
@@ -360,18 +330,6 @@ const { data: answers } = await supabase
     font-size: 0.75rem;
     font-weight: 300;
     color: rgba(255, 255, 255, 0.3);
-  }
-
-  .action-link {
-    font-size: 0.8125rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.5);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .action-link:hover {
-    color: rgba(255, 255, 255, 0.9);
   }
 
   .answers-list {

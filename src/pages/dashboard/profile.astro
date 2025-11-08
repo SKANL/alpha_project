@@ -1,7 +1,7 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import Navigation from "../../components/Navigation.astro";
-import { supabase } from "../../lib/supabase";
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import { supabase } from "@/lib/supabase";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -31,7 +31,7 @@ const { data: profile } = await supabase
 <Layout title="Despacho">
   <div class="dashboard-container">
     <Navigation currentPage="profile" />
-    
+
     <main class="dashboard-main">
       <header class="page-header">
         <h1 class="page-title">Despacho</h1>
@@ -60,11 +60,13 @@ const { data: profile } = await supabase
             accept="image/*"
             class="form-input-file"
           />
-          {profile?.firm_logo_url && (
-            <div class="logo-preview">
-              <img src={profile.firm_logo_url} alt="Logo" />
-            </div>
-          )}
+          {
+            profile?.firm_logo_url && (
+              <div class="logo-preview">
+                <img src={profile.firm_logo_url} alt="Logo" />
+              </div>
+            )
+          }
         </div>
 
         <div class="form-row">
@@ -82,9 +84,7 @@ const { data: profile } = await supabase
           </span>
         </div>
 
-        <button type="submit" class="submit-btn">
-          Guardar Cambios
-        </button>
+        <button type="submit" class="submit-btn"> Guardar Cambios </button>
       </form>
 
       <div id="successMessage" class="success-toast">
@@ -95,16 +95,8 @@ const { data: profile } = await supabase
 </Layout>
 
 <style>
-  .dashboard-container {
-    display: flex;
-    min-height: 100vh;
-    background: #0a0a0a;
-  }
-
+  /* Estilos específicos de profile.astro */
   .dashboard-main {
-    flex: 1;
-    margin-left: 240px;
-    padding: 4rem 6rem;
     max-width: 1200px;
   }
 
@@ -112,69 +104,8 @@ const { data: profile } = await supabase
     margin-bottom: 4rem;
   }
 
-  .page-title {
-    font-size: 2rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0.5rem;
-  }
-
-  .page-subtitle {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
   .content-form {
     max-width: 600px;
-  }
-
-  .form-row {
-    margin-bottom: 3rem;
-  }
-
-  .form-label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 1rem;
-  }
-
-  .form-input,
-  .form-input-file {
-    width: 100%;
-    padding: 1rem 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1rem;
-    font-weight: 300;
-    transition: border-color 0.3s ease;
-  }
-
-  .form-input:focus,
-  .form-input-file:focus {
-    outline: none;
-    border-bottom-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .form-input::placeholder {
-    color: rgba(255, 255, 255, 0.25);
-  }
-
-  .form-hint {
-    display: block;
-    margin-top: 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.3);
-    line-height: 1.5;
   }
 
   .logo-preview {
@@ -212,48 +143,20 @@ const { data: profile } = await supabase
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.4);
   }
+</style>
 
-  .success-toast {
-    position: fixed;
-    top: 2rem;
-    right: 2rem;
-    padding: 1rem 2rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.875rem;
-    font-weight: 300;
-    border-radius: 2px;
-    display: none;
-    animation: slideInRight 0.3s ease-out;
-  }
+<script>
+  const form = document.getElementById("profileForm") as HTMLFormElement;
+  const successMessage = document.getElementById("successMessage");
 
-  .success-toast.show {
-    display: block;
-  }
-
-  @keyframes slideInRight {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-</style><script>
-  const form = document.getElementById('profileForm') as HTMLFormElement;
-  const successMessage = document.getElementById('successMessage');
-
-  form?.addEventListener('submit', async (e) => {
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const formData = new FormData(form);
 
     try {
-      const response = await fetch('/api/profile/update', {
-        method: 'POST',
+      const response = await fetch("/api/profile/update", {
+        method: "POST",
         body: formData,
       });
 
@@ -262,37 +165,48 @@ const { data: profile } = await supabase
         const body = await response.json();
 
         // Update input values if returned
-        const nameInput = document.getElementById('firm_name') as HTMLInputElement | null;
-        const calendarInput = document.getElementById('calendar_link') as HTMLInputElement | null;
+        const nameInput = document.getElementById(
+          "firm_name"
+        ) as HTMLInputElement | null;
+        const calendarInput = document.getElementById(
+          "calendar_link"
+        ) as HTMLInputElement | null;
         if (body?.firm_name && nameInput) nameInput.value = body.firm_name;
-        if (body?.calendar_link && calendarInput) calendarInput.value = body.calendar_link;
+        if (body?.calendar_link && calendarInput)
+          calendarInput.value = body.calendar_link;
 
         // Update logo preview if provided
         if (body?.firm_logo_url) {
-          const logoPreview = document.querySelector('.logo-preview') as HTMLElement | null;
+          const logoPreview = document.querySelector(
+            ".logo-preview"
+          ) as HTMLElement | null;
           if (logoPreview) {
             // replace or create img inside preview
-            let img = logoPreview.querySelector('img') as HTMLImageElement | null;
+            let img = logoPreview.querySelector(
+              "img"
+            ) as HTMLImageElement | null;
             if (!img) {
-              img = document.createElement('img');
+              img = document.createElement("img");
               logoPreview.appendChild(img);
             }
             img.src = body.firm_logo_url;
-            img.alt = 'Logo';
+            img.alt = "Logo";
           }
         }
 
         // Show success toast briefly
-        successMessage?.classList.add('show');
+        successMessage?.classList.add("show");
         setTimeout(() => {
-          successMessage?.classList.remove('show');
+          successMessage?.classList.remove("show");
         }, 3000);
       } else {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-        alert('Error: ' + (error?.error || JSON.stringify(error)));
+        const error = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        alert("Error: " + (error?.error || JSON.stringify(error)));
       }
     } catch (error) {
-      alert('Error al guardar el perfil');
+      alert("Error al guardar el perfil");
     }
   });
 </script>

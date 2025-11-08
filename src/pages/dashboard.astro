@@ -1,7 +1,7 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Navigation from "../components/Navigation.astro";
-import { supabase } from "../lib/supabase";
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import { supabase } from "@/lib/supabase";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -124,37 +124,7 @@ const { data: questionnaireTemplates } = await supabase
 <p class="text-sm text-gray-400 uppercase tracking-wider">Total Clientes</p>
 
 <style>
-  .dashboard-container {
-    display: flex;
-    min-height: 100vh;
-    background: #0a0a0a;
-  }
-
-  .dashboard-main {
-    flex: 1;
-    margin-left: 240px;
-    padding: 4rem 6rem;
-  }
-
-  .page-header {
-    margin-bottom: 4rem;
-  }
-
-  .page-title {
-    font-size: 2rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 0.5rem;
-  }
-
-  .page-subtitle {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
+  /* Estilos específicos de dashboard.astro */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -193,6 +163,10 @@ const { data: questionnaireTemplates } = await supabase
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.4);
+  }
+
+  .page-header {
+    margin-bottom: 4rem;
   }
 
   .templates-section {
