@@ -8,7 +8,7 @@ const session = await supabase.auth.setSession({
   access_token: Astro.cookies.get("sb-access-token")?.value || "",
 });
 
-if (!session.data.user) return Astro.redirect("/signin");
+if (!session.data.user) return Astro.redirect("/auth/signin");
 
 const { data: contracts } = await supabase
   .from("contract_templates")

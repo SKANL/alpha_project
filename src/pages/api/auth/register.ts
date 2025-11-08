@@ -22,5 +22,5 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     return new Response(`Error: ${error.message}`, { status: 500 });
   }
 
-  return redirect("/signin");
+  return redirect("/auth/signin");
 };

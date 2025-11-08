@@ -1,5 +1,5 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
 
 const { cookies, redirect } = Astro;
 
@@ -67,7 +67,7 @@ export const prerender = true;
 
       <!-- Footer -->
       <div class="form-footer">
-        <p>Already have an account? <a href="/signin">sign in</a></p>
+  <p>Already have an account? <a href="/auth/signin">sign in</a></p>
       </div>
     </div>
   </div>
