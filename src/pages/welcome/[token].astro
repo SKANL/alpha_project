@@ -104,12 +104,26 @@ if (!token) {
 
         <div class="form-divider"></div>
 
-        <div class="form-container">
-          <form id="questionnaireForm" class="questionnaire-form"></form>
+        <div class="form-container questionnaire-container">
+          <div id="questionProgress" class="question-progress" style="display:none;">
+            <div class="progress-info">
+              <span id="progressText">Pregunta 0 de 0</span>
+            </div>
+            <div class="progress-track">
+              <div id="progressBar" class="progress-bar" style="width:0%"></div>
+            </div>
+          </div>
 
-          <button class="btn-primary" onclick="submitQuestionnaire()">
-            Enviar Respuestas
-          </button>
+          <div class="question-actions">
+            <button type="button" class="btn-secondary" onclick="nextStep(3)">Atrás</button>
+          </div>
+
+          <form id="questionnaireForm" class="questionnaire-form" novalidate></form>
+
+          <div class="nav-row" style="display:flex;gap:0.75rem;margin-top:0.75rem;">
+            <button id="prevQuestionBtn" type="button" class="btn-secondary" onclick="prevQuestion()">Anterior</button>
+            <button id="nextQuestionBtn" type="button" class="btn-primary" onclick="nextQuestion()">Siguiente</button>
+          </div>
         </div>
       </div>
     </div>
@@ -216,6 +230,12 @@ if (!token) {
     width: 100%;
     /* Allow wider content for contract view while keeping a comfortable reading column */
     max-width: 920px;
+  }
+
+  /* Use extra horizontal space for the questionnaire step */
+  #step4 .step-wrapper {
+    max-width: 100%; /* use full viewport width for questionnaire */
+    padding: 0 2rem;
   }
 
   /* Firm Logo */
@@ -391,18 +411,88 @@ if (!token) {
     letter-spacing: 0.05em;
   }
 
+  /* Special container for questionnaire to use full width */
+  .questionnaire-container {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
   /* Questionnaire Form */
   .questionnaire-form {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     margin-bottom: 1.5rem;
+    align-items: stretch; /* allow children to stretch to full width */
+    width: 100%;
+  }
+
+  /* Questionnaire enhancements */
+  .question-progress {
+    margin-bottom: 1rem;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark-secondary);
+    font-size: 0.9rem;
+  }
+
+  .progress-track {
+    height: 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-light), var(--accent));
+    width: 0%;
+    transition: width 250ms ease;
+  }
+
+  .question-actions {
+    margin-bottom: 0.75rem;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .submit-row {
+    margin-top: 0.5rem;
+  }
+
+  .char-counter {
+    font-size: 0.75rem;
+    color: var(--text-dark-secondary);
+    text-align: right;
+  }
+
+  .question-field textarea {
+    min-height: 80px;
+    max-height: 400px;
+    resize: none;
+    overflow: hidden;
+  }
+
+  .field-error {
+    outline: 2px solid rgba(239,68,68,0.18);
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.04) inset;
   }
 
   .question-field {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
+    max-width: 100%; /* use full available width */
+    padding: 0 1rem; /* add padding to all sides for breathing room */
   }
 
   .question-field label {
@@ -426,6 +516,8 @@ if (!token) {
     line-height: 1.6;
     resize: vertical;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box; /* ensure padding doesn't overflow */
   }
 
   .question-field textarea:focus {
@@ -506,6 +598,16 @@ if (!token) {
       padding: 0 0.5rem;
     }
 
+    /* On small screens allow full width for question fields */
+    .question-field {
+      max-width: 100% !important;
+      padding: 0 !important;
+    }
+
+    .question-field textarea {
+      width: 100% !important;
+    }
+
     .firm-logo img {
       /* Reduced 60% from previous mobile 40x20 -> now ~16x8 */
       max-width: 16px;
@@ -552,6 +654,8 @@ if (!token) {
   let portalData = null;
   let canvas, ctx;
   let isDrawing = false;
+  let currentQuestionIndex = 0;
+  let questionsCount = 0;
 
   async function loadPortalData() {
     try {
@@ -753,21 +857,178 @@ if (!token) {
         });
       });
     } else if (stepNumber === 4) {
-      // Load questionnaire
+      // Load questionnaire (enhanced)
       const form = document.getElementById('questionnaireForm');
+      const progressWrap = document.getElementById('questionProgress');
       form.innerHTML = '';
-      portalData.questionnaire.questions
-        .sort((a, b) => a.order_index - b.order_index)
-        .forEach(question => {
-          const div = document.createElement('div');
-          div.className = 'question-field';
-          div.innerHTML = `
-            <label>${question.question_text}</label>
-            <textarea data-qid="${question.id}" required></textarea>
-          `;
-          form.appendChild(div);
+
+      if (!portalData.questionnaire || !portalData.questionnaire.questions) {
+        form.innerHTML = '<p class="error-text">No hay preguntas disponibles.</p>';
+        progressWrap.style.display = 'none';
+        return;
+      }
+
+      const questions = portalData.questionnaire.questions
+        .slice()
+        .sort((a, b) => a.order_index - b.order_index);
+
+      // Render questions (single-question pagination)
+      questions.forEach((question, idx) => {
+        const div = document.createElement('div');
+        div.className = 'question-field';
+        div.setAttribute('data-idx', idx);
+        const maxLen = question.max_length || 1000;
+        const required = question.required ? 'required' : '';
+        div.innerHTML = `
+          <label>${idx + 1}. ${question.question_text}${question.required ? ' *' : ''}</label>
+          <textarea data-qid="${question.id}" data-idx="${idx}" maxlength="${maxLen}" placeholder="Escribe tu respuesta..." ${required}></textarea>
+          <div class="char-counter" data-qid="${question.id}">0/${maxLen}</div>
+        `;
+        // hide by default; we'll show the current index
+        div.style.display = 'none';
+        form.appendChild(div);
+      });
+
+      // Show progress UI
+      progressWrap.style.display = 'block';
+
+      // Attach events: autosize, counters, save to draft
+      const textareas = form.querySelectorAll('textarea');
+      textareas.forEach(ta => {
+        autosizeTextarea(ta);
+        ta.addEventListener('input', (e) => {
+          autosizeTextarea(ta);
+          updateCharCounter(ta);
+          saveDraft();
+          updateProgress();
         });
+        // initialize counter
+        updateCharCounter(ta);
+      });
+
+      // Load draft answers if any
+      loadDraft();
+
+      // Initialize pagination state
+      questionsCount = questions.length;
+      currentQuestionIndex = 0;
+      showQuestion(currentQuestionIndex);
     }
+  };
+
+  // Autosize helper
+  function autosizeTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 400) + 'px';
+  }
+
+  function updateCharCounter(el) {
+    const qid = el.dataset.qid;
+    const counter = document.querySelector(`.char-counter[data-qid="${qid}"]`);
+    const max = el.getAttribute('maxlength') || 1000;
+    if (counter) counter.textContent = `${el.value.length}/${max}`;
+  }
+
+  // Persist answers to localStorage so users don't lose progress
+  function saveDraft() {
+    try {
+      const answers = {};
+      document.querySelectorAll('#questionnaireForm textarea').forEach(ta => {
+        answers[ta.dataset.qid] = ta.value;
+      });
+      localStorage.setItem(`portal_answers_${token}`, JSON.stringify(answers));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(`portal_answers_${token}`);
+      if (!raw) return;
+      const answers = JSON.parse(raw);
+      Object.keys(answers).forEach(qid => {
+        const ta = document.querySelector(`#questionnaireForm textarea[data-qid="${qid}"]`);
+        if (ta) {
+          ta.value = answers[qid] || '';
+          autosizeTextarea(ta);
+          updateCharCounter(ta);
+        }
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function updateProgress() {
+    const total = questionsCount || document.querySelectorAll('#questionnaireForm .question-field').length;
+    if (total === 0) return;
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const idx = currentQuestionIndex || 0;
+    const percent = Math.round(((idx + 1) / total) * 100);
+    if (progressBar) progressBar.style.width = percent + '%';
+    if (progressText) progressText.textContent = `Pregunta ${idx + 1} de ${total}`;
+  }
+
+  function showFieldError(el) {
+    if (!el) return;
+    el.classList.add('field-error');
+  }
+
+  function clearFieldError(el) {
+    if (!el) return;
+    el.classList.remove('field-error');
+  }
+
+  // Pagination helpers for single-question mode
+  function showQuestion(idx) {
+    const fields = document.querySelectorAll('#questionnaireForm .question-field');
+    const total = fields.length;
+    if (total === 0) return;
+    if (idx < 0) idx = 0;
+    if (idx > total - 1) idx = total - 1;
+    currentQuestionIndex = idx;
+    fields.forEach(f => f.style.display = 'none');
+    const current = document.querySelector(`#questionnaireForm .question-field[data-idx="${idx}"]`);
+    if (current) current.style.display = 'block';
+    // update nav button states
+    const prevBtn = document.getElementById('prevQuestionBtn');
+    const nextBtn = document.getElementById('nextQuestionBtn');
+    if (prevBtn) prevBtn.disabled = (idx === 0);
+    if (nextBtn) nextBtn.textContent = (idx === total - 1) ? 'Enviar Respuestas' : 'Siguiente';
+    updateProgress();
+  }
+
+  window.nextQuestion = function() {
+    const total = document.querySelectorAll('#questionnaireForm .question-field').length;
+    if (total === 0) return;
+    // Validate current
+    const current = document.querySelector(`#questionnaireForm .question-field[data-idx="${currentQuestionIndex}"] textarea`);
+    if (current) {
+      clearFieldError(current);
+      const isRequired = current.hasAttribute('required');
+      if (isRequired && current.value.trim() === '') {
+        showFieldError(current);
+        current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return alert('Por favor, responde la pregunta antes de continuar.');
+      }
+    }
+
+    if (currentQuestionIndex >= total - 1) {
+      // last -> submit
+      submitQuestionnaire();
+    } else {
+      currentQuestionIndex += 1;
+      showQuestion(currentQuestionIndex);
+    }
+  };
+
+  window.prevQuestion = function() {
+    if (currentQuestionIndex <= 0) return;
+    currentQuestionIndex -= 1;
+    showQuestion(currentQuestionIndex);
   };
 
   window.signContract = async function() {
@@ -794,29 +1055,59 @@ if (!token) {
     }
   };
 
-  window.submitQuestionnaire = async function() {
-    const textareas = document.querySelectorAll('#questionnaireForm textarea');
-    const answers = Array.from(textareas).map(ta => ({
-      question_id: ta.dataset.qid,
-      answer_text: ta.value,
-    }));
+    window.submitQuestionnaire = async function() {
+      const submitBtn = document.getElementById('submitAnswersBtn');
+      const textareas = Array.from(document.querySelectorAll('#questionnaireForm textarea'));
 
-    try {
-      const response = await fetch('/api/portal/submit-answers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, answers }),
-      });
-
-      if (response.ok) {
-        await completeProcess();
-      } else {
-        alert('Error al enviar respuestas');
+      // Client-side validation for required fields
+      let firstInvalid = null;
+      textareas.forEach(ta => clearFieldError(ta));
+      for (const ta of textareas) {
+        const isRequired = ta.hasAttribute('required');
+        if (isRequired && ta.value.trim() === '') {
+          showFieldError(ta);
+          if (!firstInvalid) firstInvalid = ta;
+        }
       }
-    } catch (error) {
-      alert('Error al enviar respuestas');
-    }
-  };
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return alert('Por favor, responde las preguntas marcadas con * antes de continuar.');
+      }
+
+      const answers = textareas.map(ta => ({
+        question_id: ta.dataset.qid,
+        answer_text: ta.value,
+      }));
+
+      // Disable button while submitting
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+      }
+
+      try {
+        const response = await fetch('/api/portal/submit-answers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, answers }),
+        });
+
+        if (response.ok) {
+          // Clear saved draft
+          try { localStorage.removeItem(`portal_answers_${token}`); } catch (e) {}
+          await completeProcess();
+        } else {
+          alert('Error al enviar respuestas');
+        }
+      } catch (error) {
+        alert('Error al enviar respuestas');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Enviar Respuestas';
+        }
+      }
+    };
 
   async function completeProcess() {
     try {
