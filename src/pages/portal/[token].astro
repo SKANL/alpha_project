@@ -20,7 +20,7 @@ if (!token) {
     <div id="step1" class="step" style="display: none;">
       <div class="step-wrapper">
         <div id="firmLogo" class="firm-logo"></div>
-        
+
         <div class="form-header">
           <h1 id="firmName">ようこそ</h1>
           <p id="clientName" class="client-name"></p>
@@ -31,12 +31,11 @@ if (!token) {
 
         <div class="form-container">
           <p class="welcome-text">
-            Te guiaremos paso a paso para completar tu proceso de incorporación. Solo tomará unos minutos.
+            Te guiaremos paso a paso para completar tu proceso de incorporación.
+            Solo tomará unos minutos.
           </p>
-          
-          <button class="btn-primary" onclick="nextStep(2)">
-            Comenzar
-          </button>
+
+          <button class="btn-primary" onclick="nextStep(2)"> Comenzar </button>
         </div>
       </div>
     </div>
@@ -52,22 +51,39 @@ if (!token) {
         <div class="form-divider"></div>
 
         <div class="form-container">
-            <div class="contract-viewer">
-              <div class="contract-actions">
-                <p class="contract-help">abre el documento en una nueva pestaña.</p>
-                <a id="openDocumentBtn" class="btn-primary" target="_blank" rel="noopener noreferrer" href="#">Abrir documento en nueva pestaña</a>
-              </div>
+          <div class="contract-viewer">
+            <div class="contract-actions">
+              <p class="contract-help">
+                abre el documento en una nueva pestaña.
+              </p>
+              <a
+                id="openDocumentBtn"
+                class="btn-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="#">Abrir documento en nueva pestaña</a
+              >
             </div>
+          </div>
 
           <div class="signature-section">
             <label for="signatureCanvas">Tu Firma Digital</label>
             <canvas id="signatureCanvas"></canvas>
-            <button type="button" class="btn-secondary" onclick="clearSignature()">
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="clearSignature()"
+            >
               Limpiar
             </button>
           </div>
 
-          <button class="btn-primary" onclick="signContract()" disabled id="signBtn">
+          <button
+            class="btn-primary"
+            onclick="signContract()"
+            disabled
+            id="signBtn"
+          >
             Aceptar y Firmar
           </button>
         </div>
@@ -87,9 +103,7 @@ if (!token) {
         <div class="form-container">
           <div id="documentsContainer" class="documents-container"></div>
 
-          <button class="btn-primary" onclick="nextStep(4)">
-            Continuar
-          </button>
+          <button class="btn-primary" onclick="nextStep(4)"> Continuar </button>
         </div>
       </div>
     </div>
@@ -105,7 +119,11 @@ if (!token) {
         <div class="form-divider"></div>
 
         <div class="form-container questionnaire-container">
-          <div id="questionProgress" class="question-progress" style="display:none;">
+          <div
+            id="questionProgress"
+            class="question-progress"
+            style="display:none;"
+          >
             <div class="progress-info">
               <span id="progressText">Pregunta 0 de 0</span>
             </div>
@@ -115,14 +133,30 @@ if (!token) {
           </div>
 
           <div class="question-actions">
-            <button type="button" class="btn-secondary" onclick="nextStep(3)">Atrás</button>
+            <button type="button" class="btn-secondary" onclick="nextStep(3)"
+              >Atrás</button
+            >
           </div>
 
-          <form id="questionnaireForm" class="questionnaire-form" novalidate></form>
+          <form id="questionnaireForm" class="questionnaire-form" novalidate>
+          </form>
 
-          <div class="nav-row" style="display:flex;gap:0.75rem;margin-top:0.75rem;">
-            <button id="prevQuestionBtn" type="button" class="btn-secondary" onclick="prevQuestion()">Anterior</button>
-            <button id="nextQuestionBtn" type="button" class="btn-primary" onclick="nextQuestion()">Siguiente</button>
+          <div
+            class="nav-row"
+            style="display:flex;gap:0.75rem;margin-top:0.75rem;"
+          >
+            <button
+              id="prevQuestionBtn"
+              type="button"
+              class="btn-secondary"
+              onclick="prevQuestion()">Anterior</button
+            >
+            <button
+              id="nextQuestionBtn"
+              type="button"
+              class="btn-primary"
+              onclick="nextQuestion()">Siguiente</button
+            >
           </div>
         </div>
       </div>
@@ -142,11 +176,16 @@ if (!token) {
           <div class="success-message">
             <div class="success-icon">✓</div>
             <p class="success-text">
-              Tu información ha sido recibida exitosamente. Pronto nos pondremos en contacto contigo.
+              Tu información ha sido recibida exitosamente. Pronto nos pondremos
+              en contacto contigo.
             </p>
           </div>
 
-          <div id="calendarSection" class="calendar-section" style="display: none;">
+          <div
+            id="calendarSection"
+            class="calendar-section"
+            style="display: none;"
+          >
             <div class="form-divider"></div>
             <p class="calendar-text">Agenda tu primera reunión</p>
             <a id="calendarLink" href="#" target="_blank" class="btn-primary">
@@ -178,7 +217,12 @@ if (!token) {
 </Layout>
 
 <style>
-  /* Container Principal */
+  /* --- Compact, consolidated styles for portal page --- */
+  :root {
+    --small: 0.75rem;
+    --muted: var(--text-dark-secondary);
+  }
+
   .welcome-container {
     min-height: 100vh;
     display: flex;
@@ -188,36 +232,32 @@ if (!token) {
     background: var(--bg-dark-main);
   }
 
-  /* Loading Screen */
   .loading-screen,
   .error-screen {
     text-align: center;
     animation: fadeInUp 0.6s ease-out;
   }
-
   .loader {
-    border: 2px solid var(--border-dark);
-    border-top: 2px solid var(--accent-light);
-    border-radius: 50%;
     width: 40px;
     height: 40px;
+    border: 2px solid var(--border-dark);
+    border-top-color: var(--accent-light);
+    border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;
   }
-
   .loading-text {
     font-size: 0.875rem;
     font-weight: 300;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     letter-spacing: 0.05em;
   }
-
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
-  /* Steps */
   .step {
     width: 100%;
     max-width: 1200px;
@@ -225,70 +265,50 @@ if (!token) {
     display: flex;
     justify-content: center;
   }
-
   .step-wrapper {
     width: 100%;
-    /* Allow wider content for contract view while keeping a comfortable reading column */
     max-width: 920px;
   }
-
-  /* Use extra horizontal space for the questionnaire step */
   #step4 .step-wrapper {
-    max-width: 100%; /* use full viewport width for questionnaire */
+    max-width: 100%;
     padding: 0 2rem;
   }
 
-  /* Firm Logo */
   .firm-logo {
-    text-align: center;
-    margin-bottom: 2rem;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 2rem;
   }
-
-  .firm-logo img {
-    /* Reduced 60% from previous 50x25 -> now ~20x10 */
-      max-width: 20px;
-      max-height: 10px;
-      width: 20px !important;
-      height: 10px !important;
-      object-fit: contain;
-      opacity: 0.9;
-      display: block;
-      margin: 0 auto;
+  .firm-logo img,
+  .firm-logo-img {
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    opacity: 0.9;
+    width: 20px;
+    height: 10px;
+    max-width: 20px;
+    max-height: 10px;
   }
-
-    /* extra selector to ensure third-party styles or inline images don't render at full size */
-    .firm-logo-img {
-      width: 20px !important;
-      height: 10px !important;
-      max-width: 20px !important;
-      max-height: 10px !important;
-      display: block;
-      margin: 0 auto;
-    }
-  /* Client Name (optional personalization) */
   .client-name {
-    font-size: 0.75rem !important;
+    font-size: var(--small) !important;
     font-weight: 300;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     margin: 0.25rem 0 0 0 !important;
   }
 
-  /* Welcome Text */
   .welcome-text {
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     text-align: center;
     font-weight: 300;
     margin-bottom: 1.5rem;
   }
 
-  /* Contract Viewer */
   .contract-viewer {
     margin-bottom: 2rem;
     display: flex;
@@ -296,7 +316,6 @@ if (!token) {
     align-items: center;
     width: 100%;
   }
-
   .contract-actions {
     display: flex;
     flex-direction: column;
@@ -305,85 +324,73 @@ if (!token) {
     width: 100%;
     max-width: 880px;
   }
-
   .contract-help {
     font-size: 0.875rem;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     text-align: center;
-    margin: 0 0 0.5rem 0;
+    margin-bottom: 0.5rem;
   }
-
   #openDocumentBtn {
-    width: auto;
+    display: inline-block;
     padding: 0.5rem 1.25rem;
     text-align: center;
-    display: inline-block;
   }
 
-  /* Signature Section */
   .signature-section {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
     margin-bottom: 1.5rem;
   }
-
   .signature-section label {
-    font-size: 0.75rem;
+    font-size: var(--small);
     font-weight: 300;
     color: var(--text-dark-primary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
-
   #signatureCanvas {
     border: 1px solid var(--border-dark);
     border-radius: 2px;
-    background: #ffffff;
+    background: #fff;
     cursor: crosshair;
     width: 100%;
     height: 150px;
     display: block;
   }
 
-  /* Documents Container */
   .documents-container {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     margin-bottom: 1.5rem;
   }
-
   .document-upload {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
   }
-
   .document-upload label {
-    font-size: 0.75rem;
+    font-size: var(--small);
     font-weight: 300;
     color: var(--text-dark-primary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
-
   .document-upload input[type="file"] {
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-dark);
     border-radius: 2px;
     background: var(--bg-dark-card);
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     font-size: 0.75rem;
     font-weight: 300;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
   }
-
   .document-upload input[type="file"]:hover {
     border-color: var(--accent-light);
   }
-
   .document-upload input[type="file"]::file-selector-button {
     padding: 0.375rem 1rem;
     margin-right: 1rem;
@@ -392,26 +399,21 @@ if (!token) {
     background: var(--bg-dark-main);
     color: var(--text-dark-primary);
     font-size: 0.75rem;
-    font-weight: 300;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
   }
-
   .document-upload input[type="file"]::file-selector-button:hover {
     background: var(--accent-light);
     color: var(--text-white);
     border-color: var(--accent-light);
   }
-
   .upload-status {
     font-size: 0.75rem;
     font-weight: 300;
     letter-spacing: 0.05em;
   }
 
-  /* Special container for questionnaire to use full width */
   .questionnaire-container {
     width: 100%;
     max-width: none;
@@ -420,41 +422,35 @@ if (!token) {
     flex-direction: column;
     gap: 1.5rem;
   }
-
-  /* Questionnaire Form */
   .questionnaire-form {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     margin-bottom: 1.5rem;
-    align-items: stretch; /* allow children to stretch to full width */
+    align-items: stretch;
     width: 100%;
   }
 
-  /* Questionnaire enhancements */
   .question-progress {
     margin-bottom: 1rem;
   }
-
   .progress-info {
     display: flex;
     justify-content: center;
     margin-bottom: 0.5rem;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     font-size: 0.9rem;
   }
-
   .progress-track {
     height: 6px;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     border-radius: 999px;
     overflow: hidden;
   }
-
   .progress-bar {
     height: 100%;
     background: linear-gradient(90deg, var(--accent-light), var(--accent));
-    width: 0%;
+    width: 0;
     transition: width 250ms ease;
   }
 
@@ -463,48 +459,29 @@ if (!token) {
     display: flex;
     gap: 0.75rem;
   }
-
-  .submit-row {
-    margin-top: 0.5rem;
-  }
-
   .char-counter {
     font-size: 0.75rem;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     text-align: right;
   }
-
-  .question-field textarea {
-    min-height: 80px;
-    max-height: 400px;
-    resize: none;
-    overflow: hidden;
-  }
-
-  .field-error {
-    outline: 2px solid rgba(239,68,68,0.18);
-    box-shadow: 0 0 0 3px rgba(239,68,68,0.04) inset;
-  }
-
   .question-field {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     width: 100%;
-    max-width: 100%; /* use full available width */
-    padding: 0 1rem; /* add padding to all sides for breathing room */
+    max-width: 100%;
+    padding: 0 1rem;
   }
-
   .question-field label {
-    font-size: 0.75rem;
+    font-size: var(--small);
     font-weight: 300;
     color: var(--text-dark-primary);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
-
   .question-field textarea {
     min-height: 100px;
+    max-height: 400px;
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-dark);
     border-radius: 2px;
@@ -515,28 +492,28 @@ if (!token) {
     font-weight: 300;
     line-height: 1.6;
     resize: vertical;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
     width: 100%;
-    box-sizing: border-box; /* ensure padding doesn't overflow */
+    box-sizing: border-box;
   }
-
   .question-field textarea:focus {
     outline: none;
     border-color: var(--accent-light);
     background: var(--bg-dark-main);
   }
-
   .question-field textarea::placeholder {
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     opacity: 0.5;
   }
+  .field-error {
+    outline: 2px solid rgba(239, 68, 68, 0.18);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.04) inset;
+  }
 
-  /* Success Message */
   .success-message {
     text-align: center;
     padding: 2rem 0;
   }
-
   .success-icon {
     font-size: 4rem;
     font-weight: 200;
@@ -544,20 +521,17 @@ if (!token) {
     margin-bottom: 1.5rem;
     line-height: 1;
   }
-
   .success-text {
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     font-weight: 300;
     margin: 0;
   }
 
-  /* Calendar Section */
   .calendar-section {
     margin-top: 2rem;
   }
-
   .calendar-text {
     font-size: 0.875rem;
     font-weight: 300;
@@ -566,72 +540,48 @@ if (!token) {
     margin: 1rem 0 1.5rem 0;
     letter-spacing: 0.05em;
   }
-
-  /* Error Text */
   .error-text {
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--text-dark-secondary);
+    color: var(--muted);
     text-align: center;
     font-weight: 300;
   }
-
-  /* Buttons */
   .btn-primary,
   .btn-secondary {
     width: 100%;
     text-align: center;
   }
 
-  /* Responsive Design */
   @media (max-width: 640px) {
     .welcome-container {
       padding: 1.5rem 1rem;
     }
-
-    .step {
-      max-width: 100%;
-    }
-
     .step-wrapper {
       max-width: 100%;
       padding: 0 0.5rem;
     }
-
-    /* On small screens allow full width for question fields */
     .question-field {
       max-width: 100% !important;
       padding: 0 !important;
     }
-
     .question-field textarea {
       width: 100% !important;
     }
-
-    .firm-logo img {
-      /* Reduced 60% from previous mobile 40x20 -> now ~16x8 */
+    .firm-logo img,
+    .firm-logo-img {
+      width: 16px;
+      height: 8px;
       max-width: 16px;
       max-height: 8px;
-      width: 16px !important;
-      height: 8px !important;
     }
-
-    .firm-logo-img {
-      width: 16px !important;
-      height: 8px !important;
-      max-width: 16px !important;
-      max-height: 8px !important;
-    }
-
     .contract-viewer iframe {
       width: 100% !important;
       height: 300px;
     }
-
     #signatureCanvas {
       height: 120px;
     }
-
     .form-header h1 {
       font-size: 1.5rem;
     }
@@ -642,7 +592,6 @@ if (!token) {
       padding: 3rem 2rem;
     }
   }
-
   @media (min-width: 768px) {
     .step-wrapper {
       padding: 0 1rem;
@@ -651,481 +600,414 @@ if (!token) {
 </style>
 
 <script define:vars={{ token }}>
-  let portalData = null;
-  let canvas, ctx;
-  let isDrawing = false;
-  let currentQuestionIndex = 0;
-  let questionsCount = 0;
+  // Compact, modular portal script: unifica canvas, documentos, cuestionario y navegación de pasos.
+  let portalData = null,
+    canvas,
+    ctx,
+    isDrawing = false,
+    currentQuestionIndex = 0,
+    questionsCount = 0;
 
-  async function loadPortalData() {
-    try {
-      const response = await fetch(`/api/portal/validate?token=${token}`);
-      if (!response.ok) {
-        showError();
-        return;
-      }
-      
-      portalData = await response.json();
-      initializePortal();
-    } catch (error) {
-      showError();
-    }
-  }
-
-  function initializePortal() {
-    document.getElementById('loading').style.display = 'none';
-    
-    // Set firm info
-    if (portalData.profile.firm_logo_url) {
-      // insert image with explicit sizing to override intrinsic large dimensions
-      document.getElementById('firmLogo').innerHTML = 
-        `<img src="${portalData.profile.firm_logo_url}" alt="Logo" class="firm-logo-img" width="100" height="100" />`;
-    }
-
-    // Provide the contract file URL to the "open in new tab" button
-    const openBtn = document.getElementById('openDocumentBtn');
-    if (openBtn) {
-      if (portalData.contract_template && portalData.contract_template.file_url) {
-        openBtn.href = portalData.contract_template.file_url;
-        openBtn.style.display = 'inline-block';
-      } else {
-        openBtn.style.display = 'none';
-      }
-    }
-    
-    // Set firm name
-    document.getElementById('firmName').textContent = 
-      portalData.profile.firm_name || 'ようこそ';
-    
-    // Optional: Set client name for personalization
-    const clientNameElement = document.getElementById('clientName');
-    if (portalData.client && portalData.client.client_name) {
-      clientNameElement.textContent = portalData.client.client_name;
-      clientNameElement.style.display = 'block';
-    } else {
-      clientNameElement.style.display = 'none';
-    }
-    
-    // Show step 1
-    document.getElementById('step1').style.display = 'flex';
-    
-    // Setup signature canvas
-    setupSignatureCanvas();
-  }
-
-  function setupSignatureCanvas() {
-    canvas = document.getElementById('signatureCanvas');
-    if (!canvas) return;
-    
-    // Set canvas size to match display size
-    const rect = canvas.getBoundingClientRect();
-
-    // Remove existing listeners to avoid duplicates
-    const newCanvas = canvas.cloneNode(true);
-    canvas.parentNode.replaceChild(newCanvas, canvas);
-    canvas = newCanvas;
-    ctx = canvas.getContext('2d');
-    
-    // Set canvas properties
-    canvas.width = rect.width;
-    canvas.height = 150;
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    // Touch events
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      isDrawing = true;
-    });
-
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (!isDrawing) return;
-      const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      ctx.lineTo(x, y);
-      ctx.stroke();
-      document.getElementById('signBtn').disabled = false;
-    });
-
-    canvas.addEventListener('touchend', () => {
-      isDrawing = false;
-    });
-  }
-
-  function startDrawing(e) {
-    isDrawing = true;
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-  }
-
-  function draw(e) {
-    if (!isDrawing) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
-    document.getElementById('signBtn').disabled = false;
-  }
-
-  function stopDrawing() {
-    isDrawing = false;
-  }
-
-  window.clearSignature = function() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    document.getElementById('signBtn').disabled = true;
+  const qs = (sel, root = document) => root.querySelector(sel);
+  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const setDisplay = (id, v) => {
+    const el = qs("#" + id);
+    if (el) el.style.display = v;
   };
 
-  window.nextStep = function(stepNumber) {
-    document.querySelectorAll('.step').forEach(s => s.style.display = 'none');
-    document.getElementById(`step${stepNumber}`).style.display = 'flex';
+  const Portal = {
+    init() {
+      this.loadPortalData();
+    },
 
-    if (stepNumber === 2) {
-      // Reinitialize canvas after it becomes visible
-      setTimeout(() => {
-        setupSignatureCanvas();
-      }, 100);
-    } else if (stepNumber === 3) {
-      // Load documents
-      const container = document.getElementById('documentsContainer');
-      container.innerHTML = '';
-      portalData.client.required_documents.forEach(docType => {
-        const div = document.createElement('div');
-        div.className = 'document-upload';
-        div.innerHTML = `
-          <label>${docType.replace('_', ' ').toUpperCase()}</label>
-          <input type="file" data-doctype="${docType}" class="doc-input" accept="image/*,application/pdf" />
-          <span class="upload-status"></span>
-        `;
+    async loadPortalData() {
+      try {
+        const res = await fetch(`/api/portal/validate?token=${token}`);
+        if (!res.ok) return this.showError();
+        portalData = await res.json();
+        this.initializePortal();
+      } catch (e) {
+        this.showError();
+      }
+    },
+
+    initializePortal() {
+      setDisplay("loading", "none");
+
+      // Firm logo
+      if (portalData?.profile?.firm_logo_url) {
+        qs("#firmLogo").innerHTML =
+          `<img src="${portalData.profile.firm_logo_url}" alt="Logo" class="firm-logo-img" width="100" height="100"/>`;
+      }
+
+      // Contract open button
+      const openBtn = qs("#openDocumentBtn");
+      if (openBtn) {
+        if (portalData?.contract_template?.file_url) {
+          openBtn.href = portalData.contract_template.file_url;
+          openBtn.style.display = "inline-block";
+        } else openBtn.style.display = "none";
+      }
+
+      qs("#firmName").textContent =
+        portalData?.profile?.firm_name || "ようこそ";
+      const clientNameEl = qs("#clientName");
+      if (portalData?.client?.client_name) {
+        clientNameEl.textContent = portalData.client.client_name;
+        clientNameEl.style.display = "block";
+      } else clientNameEl.style.display = "none";
+
+      setDisplay("step1", "flex");
+      this.setupSignatureCanvas();
+    },
+
+    setupSignatureCanvas() {
+      canvas = qs("#signatureCanvas");
+      if (!canvas) return;
+
+      // Replace node to remove leftover listeners, then compute size and attach pointer events
+      const rect = canvas.getBoundingClientRect();
+      const newCanvas = canvas.cloneNode(true);
+      canvas.parentNode.replaceChild(newCanvas, canvas);
+      canvas = newCanvas;
+      ctx = canvas.getContext("2d");
+      canvas.width = Math.max(rect.width, 300);
+      canvas.height = 150;
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+
+      canvas.addEventListener("pointerdown", (e) => {
+        isDrawing = true;
+        canvas.setPointerCapture(e.pointerId);
+        const r = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
+      });
+      canvas.addEventListener("pointermove", (e) => {
+        if (!isDrawing) return;
+        const r = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
+        ctx.stroke();
+        qs("#signBtn").disabled = false;
+      });
+      const end = (e) => {
+        isDrawing = false;
+        try {
+          canvas.releasePointerCapture &&
+            canvas.releasePointerCapture(e?.pointerId);
+        } catch (e) {}
+      };
+      canvas.addEventListener("pointerup", end);
+      canvas.addEventListener("pointercancel", end);
+      canvas.addEventListener("pointerout", end);
+    },
+
+    clearSignature() {
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        qs("#signBtn").disabled = true;
+      }
+    },
+
+    async signContract() {
+      if (!canvas) return alert("Firma no disponible");
+      const signatureData = canvas.toDataURL();
+      try {
+        const res = await fetch("/api/portal/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token,
+            signature_data: signatureData,
+            ip_address: "client-ip",
+          }),
+        });
+        if (res.ok) this.nextStep(3);
+        else alert("Error al firmar el contrato");
+      } catch (e) {
+        alert("Error al firmar el contrato");
+      }
+    },
+
+    nextStep(step) {
+      qsa(".step").forEach((s) => (s.style.display = "none"));
+      setDisplay(`step${step}`, "flex");
+      if (step === 2) setTimeout(() => this.setupSignatureCanvas(), 100);
+      if (step === 3) this.renderDocuments();
+      if (step === 4) this.loadQuestionnaire();
+    },
+
+    renderDocuments() {
+      const container = qs("#documentsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      const docs = portalData?.client?.required_documents || [];
+      docs.forEach((docType) => {
+        const div = document.createElement("div");
+        div.className = "document-upload";
+        div.innerHTML = `<label>${docType.replace("_", " ").toUpperCase()}</label><input type="file" data-doctype="${docType}" class="doc-input" accept="image/*,application/pdf" /><span class="upload-status"></span>`;
         container.appendChild(div);
       });
 
-      // Setup file upload
-      document.querySelectorAll('.doc-input').forEach(input => {
-        input.addEventListener('change', async (e) => {
-          const file = e.target.files[0];
+      // Delegated handler
+      qsa(".doc-input").forEach((input) =>
+        input.addEventListener("change", async (e) => {
+          const file = e.target.files?.[0];
           if (!file) return;
-          
           const docType = e.target.dataset.doctype;
-          const formData = new FormData();
-          formData.append('token', token);
-          formData.append('document_type', docType);
-          formData.append('file', file);
-
-          const status = e.target.parentElement.querySelector('.upload-status');
-          status.textContent = 'Subiendo...';
-
+          const status = e.target.parentElement.querySelector(".upload-status");
+          status.textContent = "Subiendo...";
+          const fd = new FormData();
+          fd.append("token", token);
+          fd.append("document_type", docType);
+          fd.append("file", file);
           try {
-            const response = await fetch('/api/portal/upload-document', {
-              method: 'POST',
-              body: formData,
+            const r = await fetch("/api/portal/upload-document", {
+              method: "POST",
+              body: fd,
             });
-            if (response.ok) {
-              status.textContent = '✓ Subido';
-              status.style.color = '#22c55e';
+            if (r.ok) {
+              status.textContent = "✓ Subido";
+              status.style.color = "#22c55e";
             } else {
-              status.textContent = '✗ Error';
-              status.style.color = '#ef4444';
+              status.textContent = "✗ Error";
+              status.style.color = "#ef4444";
             }
-          } catch (error) {
-            status.textContent = '✗ Error';
-            status.style.color = '#ef4444';
+          } catch (err) {
+            status.textContent = "✗ Error";
+            status.style.color = "#ef4444";
           }
-        });
-      });
-    } else if (stepNumber === 4) {
-      // Load questionnaire (enhanced)
-      const form = document.getElementById('questionnaireForm');
-      const progressWrap = document.getElementById('questionProgress');
-      form.innerHTML = '';
+        })
+      );
+    },
 
-      if (!portalData.questionnaire || !portalData.questionnaire.questions) {
-        form.innerHTML = '<p class="error-text">No hay preguntas disponibles.</p>';
-        progressWrap.style.display = 'none';
+    loadQuestionnaire() {
+      const form = qs("#questionnaireForm");
+      const progressWrap = qs("#questionProgress");
+      if (!form) return;
+      form.innerHTML = "";
+      const questions = (portalData?.questionnaire?.questions || [])
+        .slice()
+        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+      if (!questions.length) {
+        form.innerHTML =
+          '<p class="error-text">No hay preguntas disponibles.</p>';
+        if (progressWrap) progressWrap.style.display = "none";
         return;
       }
 
-      const questions = portalData.questionnaire.questions
-        .slice()
-        .sort((a, b) => a.order_index - b.order_index);
-
-      // Render questions (single-question pagination)
-      questions.forEach((question, idx) => {
-        const div = document.createElement('div');
-        div.className = 'question-field';
-        div.setAttribute('data-idx', idx);
-        const maxLen = question.max_length || 1000;
-        const required = question.required ? 'required' : '';
-        div.innerHTML = `
-          <label>${idx + 1}. ${question.question_text}${question.required ? ' *' : ''}</label>
-          <textarea data-qid="${question.id}" data-idx="${idx}" maxlength="${maxLen}" placeholder="Escribe tu respuesta..." ${required}></textarea>
-          <div class="char-counter" data-qid="${question.id}">0/${maxLen}</div>
-        `;
-        // hide by default; we'll show the current index
-        div.style.display = 'none';
+      questions.forEach((q, idx) => {
+        const maxLen = q.max_length || 1000;
+        const required = q.required ? "required" : "";
+        const div = document.createElement("div");
+        div.className = "question-field";
+        div.dataset.idx = idx;
+        div.style.display = "none";
+        div.innerHTML = `<label>${idx + 1}. ${q.question_text}${q.required ? " *" : ""}</label><textarea data-qid="${q.id}" data-idx="${idx}" maxlength="${maxLen}" placeholder="Escribe tu respuesta..." ${required}></textarea><div class="char-counter" data-qid="${q.id}">0/${maxLen}</div>`;
         form.appendChild(div);
       });
 
-      // Show progress UI
-      progressWrap.style.display = 'block';
+      if (progressWrap) progressWrap.style.display = "block";
 
-      // Attach events: autosize, counters, save to draft
-      const textareas = form.querySelectorAll('textarea');
-      textareas.forEach(ta => {
-        autosizeTextarea(ta);
-        ta.addEventListener('input', (e) => {
-          autosizeTextarea(ta);
-          updateCharCounter(ta);
-          saveDraft();
-          updateProgress();
+      qsa("#questionnaireForm textarea").forEach((ta) => {
+        this.autosizeTextarea(ta);
+        this.updateCharCounter(ta);
+        ta.addEventListener("input", () => {
+          this.autosizeTextarea(ta);
+          this.updateCharCounter(ta);
+          this.saveDraft();
+          this.updateProgress();
         });
-        // initialize counter
-        updateCharCounter(ta);
       });
 
-      // Load draft answers if any
-      loadDraft();
-
-      // Initialize pagination state
+      this.loadDraft();
       questionsCount = questions.length;
       currentQuestionIndex = 0;
-      showQuestion(currentQuestionIndex);
-    }
-  };
+      this.showQuestion(0);
+    },
 
-  // Autosize helper
-  function autosizeTextarea(el) {
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 400) + 'px';
-  }
+    autosizeTextarea(el) {
+      if (!el) return;
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 400) + "px";
+    },
+    updateCharCounter(el) {
+      const qid = el.dataset.qid;
+      const counter = qs(`.char-counter[data-qid="${qid}"]`);
+      const max = el.getAttribute("maxlength") || 1000;
+      if (counter) counter.textContent = `${el.value.length}/${max}`;
+    },
 
-  function updateCharCounter(el) {
-    const qid = el.dataset.qid;
-    const counter = document.querySelector(`.char-counter[data-qid="${qid}"]`);
-    const max = el.getAttribute('maxlength') || 1000;
-    if (counter) counter.textContent = `${el.value.length}/${max}`;
-  }
+    saveDraft() {
+      try {
+        const answers = {};
+        qsa("#questionnaireForm textarea").forEach(
+          (ta) => (answers[ta.dataset.qid] = ta.value)
+        );
+        localStorage.setItem(
+          `portal_answers_${token}`,
+          JSON.stringify(answers)
+        );
+      } catch (e) {}
+    },
+    loadDraft() {
+      try {
+        const raw = localStorage.getItem(`portal_answers_${token}`);
+        if (!raw) return;
+        const answers = JSON.parse(raw);
+        Object.keys(answers).forEach((qid) => {
+          const ta = qs(`#questionnaireForm textarea[data-qid="${qid}"]`);
+          if (ta) {
+            ta.value = answers[qid] || "";
+            this.autosizeTextarea(ta);
+            this.updateCharCounter(ta);
+          }
+        });
+      } catch (e) {}
+    },
 
-  // Persist answers to localStorage so users don't lose progress
-  function saveDraft() {
-    try {
-      const answers = {};
-      document.querySelectorAll('#questionnaireForm textarea').forEach(ta => {
-        answers[ta.dataset.qid] = ta.value;
-      });
-      localStorage.setItem(`portal_answers_${token}`, JSON.stringify(answers));
-    } catch (e) {
-      // ignore
-    }
-  }
+    updateProgress() {
+      const total =
+        questionsCount || qsa("#questionnaireForm .question-field").length;
+      if (!total) return;
+      const idx = currentQuestionIndex || 0;
+      const pct = Math.round(((idx + 1) / total) * 100);
+      const bar = qs("#progressBar");
+      const txt = qs("#progressText");
+      if (bar) bar.style.width = pct + "%";
+      if (txt) txt.textContent = `Pregunta ${idx + 1} de ${total}`;
+    },
 
-  function loadDraft() {
-    try {
-      const raw = localStorage.getItem(`portal_answers_${token}`);
-      if (!raw) return;
-      const answers = JSON.parse(raw);
-      Object.keys(answers).forEach(qid => {
-        const ta = document.querySelector(`#questionnaireForm textarea[data-qid="${qid}"]`);
-        if (ta) {
-          ta.value = answers[qid] || '';
-          autosizeTextarea(ta);
-          updateCharCounter(ta);
+    showFieldError(el) {
+      el && el.classList.add("field-error");
+    },
+    clearFieldError(el) {
+      el && el.classList.remove("field-error");
+    },
+
+    showQuestion(idx) {
+      const fields = qsa("#questionnaireForm .question-field");
+      const total = fields.length;
+      if (!total) return;
+      if (idx < 0) idx = 0;
+      if (idx > total - 1) idx = total - 1;
+      currentQuestionIndex = idx;
+      fields.forEach((f) => (f.style.display = "none"));
+      const cur = qs(`#questionnaireForm .question-field[data-idx="${idx}"]`);
+      if (cur) cur.style.display = "block";
+      const prevBtn = qs("#prevQuestionBtn");
+      const nextBtn = qs("#nextQuestionBtn");
+      if (prevBtn) prevBtn.disabled = idx === 0;
+      if (nextBtn)
+        nextBtn.textContent =
+          idx === total - 1 ? "Enviar Respuestas" : "Siguiente";
+      this.updateProgress();
+    },
+
+    nextQuestion() {
+      const total = qsa("#questionnaireForm .question-field").length;
+      if (!total) return;
+      const curTa = qs(
+        `#questionnaireForm .question-field[data-idx="${currentQuestionIndex}"] textarea`
+      );
+      if (curTa) {
+        this.clearFieldError(curTa);
+        if (curTa.hasAttribute("required") && curTa.value.trim() === "") {
+          this.showFieldError(curTa);
+          curTa.scrollIntoView({ behavior: "smooth", block: "center" });
+          return alert("Por favor, responde la pregunta antes de continuar.");
         }
-      });
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  function updateProgress() {
-    const total = questionsCount || document.querySelectorAll('#questionnaireForm .question-field').length;
-    if (total === 0) return;
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const idx = currentQuestionIndex || 0;
-    const percent = Math.round(((idx + 1) / total) * 100);
-    if (progressBar) progressBar.style.width = percent + '%';
-    if (progressText) progressText.textContent = `Pregunta ${idx + 1} de ${total}`;
-  }
-
-  function showFieldError(el) {
-    if (!el) return;
-    el.classList.add('field-error');
-  }
-
-  function clearFieldError(el) {
-    if (!el) return;
-    el.classList.remove('field-error');
-  }
-
-  // Pagination helpers for single-question mode
-  function showQuestion(idx) {
-    const fields = document.querySelectorAll('#questionnaireForm .question-field');
-    const total = fields.length;
-    if (total === 0) return;
-    if (idx < 0) idx = 0;
-    if (idx > total - 1) idx = total - 1;
-    currentQuestionIndex = idx;
-    fields.forEach(f => f.style.display = 'none');
-    const current = document.querySelector(`#questionnaireForm .question-field[data-idx="${idx}"]`);
-    if (current) current.style.display = 'block';
-    // update nav button states
-    const prevBtn = document.getElementById('prevQuestionBtn');
-    const nextBtn = document.getElementById('nextQuestionBtn');
-    if (prevBtn) prevBtn.disabled = (idx === 0);
-    if (nextBtn) nextBtn.textContent = (idx === total - 1) ? 'Enviar Respuestas' : 'Siguiente';
-    updateProgress();
-  }
-
-  window.nextQuestion = function() {
-    const total = document.querySelectorAll('#questionnaireForm .question-field').length;
-    if (total === 0) return;
-    // Validate current
-    const current = document.querySelector(`#questionnaireForm .question-field[data-idx="${currentQuestionIndex}"] textarea`);
-    if (current) {
-      clearFieldError(current);
-      const isRequired = current.hasAttribute('required');
-      if (isRequired && current.value.trim() === '') {
-        showFieldError(current);
-        current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return alert('Por favor, responde la pregunta antes de continuar.');
       }
-    }
-
-    if (currentQuestionIndex >= total - 1) {
-      // last -> submit
-      submitQuestionnaire();
-    } else {
+      if (currentQuestionIndex >= total - 1) return this.submitQuestionnaire();
       currentQuestionIndex += 1;
-      showQuestion(currentQuestionIndex);
-    }
-  };
+      this.showQuestion(currentQuestionIndex);
+    },
 
-  window.prevQuestion = function() {
-    if (currentQuestionIndex <= 0) return;
-    currentQuestionIndex -= 1;
-    showQuestion(currentQuestionIndex);
-  };
+    prevQuestion() {
+      if (currentQuestionIndex <= 0) return;
+      currentQuestionIndex -= 1;
+      this.showQuestion(currentQuestionIndex);
+    },
 
-  window.signContract = async function() {
-    const signatureData = canvas.toDataURL();
-    
-    try {
-      const response = await fetch('/api/portal/sign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          signature_data: signatureData,
-          ip_address: 'client-ip', // In production, get from server
-        }),
-      });
-
-      if (response.ok) {
-        nextStep(3);
-      } else {
-        alert('Error al firmar el contrato');
-      }
-    } catch (error) {
-      alert('Error al firmar el contrato');
-    }
-  };
-
-    window.submitQuestionnaire = async function() {
-      const submitBtn = document.getElementById('submitAnswersBtn');
-      const textareas = Array.from(document.querySelectorAll('#questionnaireForm textarea'));
-
-      // Client-side validation for required fields
+    async submitQuestionnaire() {
+      const submitBtn = qs("#submitAnswersBtn");
+      const textareas = qsa("#questionnaireForm textarea");
       let firstInvalid = null;
-      textareas.forEach(ta => clearFieldError(ta));
+      textareas.forEach((ta) => this.clearFieldError(ta));
       for (const ta of textareas) {
-        const isRequired = ta.hasAttribute('required');
-        if (isRequired && ta.value.trim() === '') {
-          showFieldError(ta);
+        if (ta.hasAttribute("required") && ta.value.trim() === "") {
+          this.showFieldError(ta);
           if (!firstInvalid) firstInvalid = ta;
         }
       }
       if (firstInvalid) {
-        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return alert('Por favor, responde las preguntas marcadas con * antes de continuar.');
+        firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+        return alert(
+          "Por favor, responde las preguntas marcadas con * antes de continuar."
+        );
       }
-
-      const answers = textareas.map(ta => ({
+      const answers = textareas.map((ta) => ({
         question_id: ta.dataset.qid,
         answer_text: ta.value,
       }));
-
-      // Disable button while submitting
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Enviando...';
+        submitBtn.textContent = "Enviando...";
       }
-
       try {
-        const response = await fetch('/api/portal/submit-answers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const r = await fetch("/api/portal/submit-answers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token, answers }),
         });
-
-        if (response.ok) {
-          // Clear saved draft
-          try { localStorage.removeItem(`portal_answers_${token}`); } catch (e) {}
-          await completeProcess();
-        } else {
-          alert('Error al enviar respuestas');
-        }
-      } catch (error) {
-        alert('Error al enviar respuestas');
+        if (r.ok) {
+          try {
+            localStorage.removeItem(`portal_answers_${token}`);
+          } catch (e) {}
+          await this.completeProcess();
+        } else alert("Error al enviar respuestas");
+      } catch (e) {
+        alert("Error al enviar respuestas");
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Enviar Respuestas';
+          submitBtn.textContent = "Enviar Respuestas";
         }
       }
-    };
+    },
 
-  async function completeProcess() {
-    try {
-      await fetch('/api/portal/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
-
-      // Show calendar link if available
-      if (portalData.profile.calendar_link) {
-        document.getElementById('calendarSection').style.display = 'block';
-        document.getElementById('calendarLink').href = portalData.profile.calendar_link;
+    async completeProcess() {
+      try {
+        await fetch("/api/portal/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        if (portalData?.profile?.calendar_link) {
+          setDisplay("calendarSection", "block");
+          qs("#calendarLink").href = portalData.profile.calendar_link;
+        }
+        this.nextStep(5);
+      } catch (e) {
+        alert("Error al completar el proceso");
       }
+    },
 
-      nextStep(5);
-    } catch (error) {
-      alert('Error al completar el proceso');
-    }
-  }
+    showError() {
+      setDisplay("loading", "none");
+      setDisplay("errorScreen", "block");
+    },
+  };
 
-  function showError() {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('errorScreen').style.display = 'block';
-  }
+  // Expose required functions for inline onclick attributes
+  window.clearSignature = () => Portal.clearSignature();
+  window.nextStep = (n) => Portal.nextStep(n);
+  window.nextQuestion = () => Portal.nextQuestion();
+  window.prevQuestion = () => Portal.prevQuestion();
+  window.signContract = () => Portal.signContract();
+  window.submitQuestionnaire = () => Portal.submitQuestionnaire();
 
-  // Initialize
-  loadPortalData();
+  // Init
+  Portal.init();
 </script>
