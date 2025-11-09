@@ -18,8 +18,10 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   });
 
   if (error) {
-    console.error("Register error:", error);
-    return new Response(`Error: ${error.message}`, { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
   return redirect("/auth/signin");

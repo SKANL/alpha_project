@@ -34,45 +34,72 @@ if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-// Get profile
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("user_id", user.id)
-  .single();
+// Get profile using API
+const profileResponse = await fetch(`${Astro.url.origin}/api/profile/get`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
 
-// Get stats
-const { data: clients } = await supabase
-  .from("clients")
-  .select("status")
-  .eq("user_id", user.id);
+let profile = null;
+if (profileResponse.ok) {
+  profile = await profileResponse.json();
+}
+
+// Get clients stats using API
+const clientsResponse = await fetch(`${Astro.url.origin}/api/clients/list`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
+
+let clients = [];
+if (clientsResponse.ok) {
+  clients = await clientsResponse.json();
+}
 
 const totalClients = clients?.length || 0;
 const pendingClients =
-  clients?.filter((c) => c.status === "pending").length || 0;
+  clients?.filter((c: any) => c.status === "pending").length || 0;
 const completedClients =
-  clients?.filter((c) => c.status === "completed").length || 0;
+  clients?.filter((c: any) => c.status === "completed").length || 0;
 
-const { data: contractTemplates } = await supabase
-  .from("contract_templates")
-  .select("id")
-  .eq("user_id", user.id);
+// Get templates using API
+const contractTemplatesResponse = await fetch(`${Astro.url.origin}/api/templates/contracts/list`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
 
-const { data: questionnaireTemplates } = await supabase
-  .from("questionnaire_templates")
-  .select("id")
-  .eq("user_id", user.id);
+let contractTemplates = [];
+if (contractTemplatesResponse.ok) {
+  contractTemplates = await contractTemplatesResponse.json();
+}
+
+const questionnaireTemplatesResponse = await fetch(`${Astro.url.origin}/api/templates/questionnaires/list`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
+
+let questionnaireTemplates = [];
+if (questionnaireTemplatesResponse.ok) {
+  questionnaireTemplates = await questionnaireTemplatesResponse.json();
+}
 ---
 
 <Layout title="Dashboard">
-  <div class="dashboard-container">
-    <Navigation currentPage="dashboard" />
+  <Navigation currentPage="dashboard" />
 
-    <main class="dashboard-main">
-      <header class="page-header">
-        <h1 class="page-title">{profile?.firm_name || "Panel de Control"}</h1>
-        <p class="page-subtitle">Vista general de tu despacho</p>
-      </header>
+  <main class="dashboard-main">
+    <header class="page-header">
+      <h1 class="page-title">{profile?.firm_name || "Panel de Control"}</h1>
+      <p class="page-subtitle">Vista general de tu despacho</p>
+    </header>
 
       <section class="stats-grid">
         <div class="stat-card">
@@ -119,9 +146,7 @@ const { data: questionnaireTemplates } = await supabase
         </div>
       </section>
     </main>
-  </div>
 </Layout>
-<p class="text-sm text-gray-400 uppercase tracking-wider">Total Clientes</p>
 
 <style>
   /* Estilos específicos de dashboard.astro */

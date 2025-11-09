@@ -21,27 +21,42 @@ if (session.error || !session.data.user) {
 
 const user = session.data.user;
 
-const { data: contracts } = await supabase
-  .from("contract_templates")
-  .select("*")
-  .eq("user_id", user.id);
+// Get contract templates using API
+const contractsResponse = await fetch(`${Astro.url.origin}/api/templates/contracts/list`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
 
-const { data: questionnaires } = await supabase
-  .from("questionnaire_templates")
-  .select("*")
-  .eq("user_id", user.id);
+let contracts = [];
+if (contractsResponse.ok) {
+  contracts = await contractsResponse.json();
+}
+
+// Get questionnaire templates using API
+const questionnairesResponse = await fetch(`${Astro.url.origin}/api/templates/questionnaires/list`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
+
+let questionnaires = [];
+if (questionnairesResponse.ok) {
+  questionnaires = await questionnairesResponse.json();
+}
 
 const hasTemplates = contracts && contracts.length > 0 && questionnaires && questionnaires.length > 0;
 ---
 
 <Layout title="Nueva Sala de Bienvenida">
-  <div class="dashboard-container">
-    <Navigation currentPage="clients" />
-    
-    <main class="dashboard-main">
-      <div class="page-header">
-        <h1 class="page-title">Nueva Sala de Bienvenida</h1>
-        <p class="page-subtitle">Crea el link mágico para tu cliente</p>
+  <Navigation currentPage="clients" />
+  
+  <main class="dashboard-main">
+    <div class="page-header">
+      <h1 class="page-title">Nueva Sala de Bienvenida</h1>
+      <p class="page-subtitle">Crea el link mágico para tu cliente</p>
       </div>
 
       {!hasTemplates && (
@@ -90,7 +105,7 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
             <label for="contract_template_id" class="form-label">Plantilla de Contrato</label>
             <select id="contract_template_id" name="contract_template_id" class="form-select" required>
               <option value="">Selecciona un contrato</option>
-              {contracts?.map((contract) => (
+              {contracts?.map((contract: any) => (
                 <option value={contract.id}>{contract.name}</option>
               ))}
             </select>
@@ -100,7 +115,7 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
             <label for="questionnaire_template_id" class="form-label">Plantilla de Cuestionario</label>
             <select id="questionnaire_template_id" name="questionnaire_template_id" class="form-select" required>
               <option value="">Selecciona un cuestionario</option>
-              {questionnaires?.map((q) => (
+              {questionnaires?.map((q: any) => (
                 <option value={q.id}>{q.name}</option>
               ))}
             </select>
@@ -154,7 +169,6 @@ const hasTemplates = contracts && contracts.length > 0 && questionnaires && ques
         </div>
       </div>
     </main>
-  </div>
 </Layout>
 
 <style>

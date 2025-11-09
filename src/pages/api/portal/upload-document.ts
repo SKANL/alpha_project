@@ -1,10 +1,11 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../lib/supabase";
+import type { DocumentType } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData();
   const token = formData.get("token") as string;
-  const document_type = formData.get("document_type") as string;
+  const document_type = formData.get("document_type") as DocumentType;
   const file = formData.get("file") as File;
 
   if (!token || !document_type || !file) {

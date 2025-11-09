@@ -8,15 +8,37 @@
     <title>Lawyer</title>
   </head>
   <body>
-    <slot />
+    <div class="dashboard-container">
+      <slot />
+    </div>
   </body>
 </html>
 
 <style is:global>
 
+  /* ===== RESET DE ESTILOS ===== */
+  html, body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ===== ASEGURAR SIN BORDES EXTERNOS ===== */
+  .dashboard-container > * {
+    border-top: none !important;
+    border-left: none !important;
+  }
+
   /* ===== VARIABLES PARA FACILITAR PERSONALIZACIÓN ===== */
   :root {
-    --bg-main: #0a0a0a;
+    --bg-main: #000000;
     --bg-card: #0a0a0a;
     --text-primary: rgba(255, 255, 255, 0.95);
     --text-secondary: rgba(255, 255, 255, 0.4);
@@ -46,12 +68,18 @@
     display: flex;
     min-height: 100vh;
     background: var(--bg-main);
+    border: none;
+    box-shadow: none;
+    outline: none;
   }
 
   .dashboard-main {
     flex: 1;
     margin-left: 240px;
     padding: 4rem 6rem;
+    border: none;
+    box-shadow: none;
+    outline: none;
   }
 
   /* Headers de Página */

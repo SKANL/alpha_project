@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../../lib/supabase";
+import type { ContractTemplate } from "../../../../lib/types";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const accessToken = cookies.get("sb-access-token");

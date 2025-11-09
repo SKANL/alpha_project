@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "@/lib/supabase";
+import type { CreateClientForm, DocumentType } from "@/lib/types";
 import crypto from "crypto";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -65,7 +66,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   // Return client with magic link
-  const magic_link = `${new URL(request.url).origin}/welcome/${magic_link_token}`;
+  const magic_link = `${new URL(request.url).origin}/portal/${magic_link_token}`;
 
   return new Response(
     JSON.stringify({ ...client, magic_link }),

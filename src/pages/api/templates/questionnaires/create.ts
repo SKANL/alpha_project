@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../../lib/supabase";
+import type { QuestionnaireTemplate, CreateQuestionnaireForm } from "../../../../lib/types";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const accessToken = cookies.get("sb-access-token");

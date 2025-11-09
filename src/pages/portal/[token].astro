@@ -1,5 +1,5 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
 
 const { token } = Astro.params;
 
@@ -699,8 +699,8 @@ if (!token) {
     
     // Optional: Set client name for personalization
     const clientNameElement = document.getElementById('clientName');
-    if (portalData.client && portalData.client.name) {
-      clientNameElement.textContent = portalData.client.name;
+    if (portalData.client && portalData.client.client_name) {
+      clientNameElement.textContent = portalData.client.client_name;
       clientNameElement.style.display = 'block';
     } else {
       clientNameElement.style.display = 'none';
@@ -717,16 +717,8 @@ if (!token) {
     canvas = document.getElementById('signatureCanvas');
     if (!canvas) return;
     
-    ctx = canvas.getContext('2d');
-    
     // Set canvas size to match display size
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = 150;
-    
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
 
     // Remove existing listeners to avoid duplicates
     const newCanvas = canvas.cloneNode(true);
@@ -734,7 +726,7 @@ if (!token) {
     canvas = newCanvas;
     ctx = canvas.getContext('2d');
     
-    // Reset canvas properties after cloning
+    // Set canvas properties
     canvas.width = rect.width;
     canvas.height = 150;
     ctx.strokeStyle = '#000';

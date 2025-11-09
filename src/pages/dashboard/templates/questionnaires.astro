@@ -3,29 +3,42 @@ import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
 import { supabase } from "@/lib/supabase";
 
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect("/auth/signin");
+}
+
 const session = await supabase.auth.setSession({
-  refresh_token: Astro.cookies.get("sb-refresh-token")?.value || "",
-  access_token: Astro.cookies.get("sb-access-token")?.value || "",
+  refresh_token: refreshToken.value,
+  access_token: accessToken.value,
 });
 
 if (!session.data.user) return Astro.redirect("/auth/signin");
 
-const { data: questionnaires } = await supabase
-  .from("questionnaire_templates")
-  .select(`*, questions(*)`)
-  .eq("user_id", session.data.user.id)
-  .order("created_at", { ascending: false });
+// Get questionnaire templates using API
+const questionnairesResponse = await fetch(`${Astro.url.origin}/api/templates/questionnaires/list`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
+
+let questionnaires = [];
+if (questionnairesResponse.ok) {
+  questionnaires = await questionnairesResponse.json();
+}
 ---
 
 <Layout title="Plantillas de Cuestionarios">
-  <div class="dashboard-container">
-    <Navigation currentPage="questionnaires" />
-    
-    <main class="dashboard-main">
-      <div class="page-header">
-        <h1 class="page-title">Plantillas de Cuestionarios</h1>
-        <p class="page-subtitle">Gestiona tus cuestionarios de hechos</p>
-      </div>
+  <Navigation currentPage="questionnaires" />
+  
+  <main class="dashboard-main">
+    <div class="page-header">
+      <h1 class="page-title">Plantillas de Cuestionarios</h1>
+      <p class="page-subtitle">Gestiona tus cuestionarios de hechos</p>
+    </div>
 
       <div class="action-bar">
         <button id="openModalBtn" class="primary-action">
@@ -93,7 +106,6 @@ const { data: questionnaires } = await supabase
         </div>
       </div>
     </main>
-  </div>
 </Layout>
 
 <style>

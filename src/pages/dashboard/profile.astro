@@ -21,77 +21,82 @@ if (session.error || !session.data.user) {
 
 const user = session.data.user;
 
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("user_id", user.id)
-  .single();
+// Get profile using API
+const profileResponse = await fetch(`${Astro.url.origin}/api/profile/get`, {
+  method: "GET",
+  headers: {
+    Cookie: `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`,
+  },
+});
+
+let profile = null;
+if (profileResponse.ok) {
+  profile = await profileResponse.json();
+}
 ---
 
 <Layout title="Despacho">
-  <div class="dashboard-container">
-    <Navigation currentPage="profile" />
+  <Navigation currentPage="profile" />
 
-    <main class="dashboard-main">
-      <header class="page-header">
-        <h1 class="page-title">Despacho</h1>
-        <p class="page-subtitle">Configuración de tu firma legal</p>
-      </header>
+  <main class="dashboard-main">
+    <header class="page-header">
+      <h1 class="page-title">Despacho</h1>
+      <p class="page-subtitle">Configuración de tu firma legal</p>
+    </header>
 
-      <form id="profileForm" class="content-form">
-        <div class="form-row">
-          <label for="firm_name" class="form-label">Nombre del Despacho</label>
-          <input
-            type="text"
-            id="firm_name"
-            name="firm_name"
-            value={profile?.firm_name || ""}
-            required
-            class="form-input"
-          />
-        </div>
-
-        <div class="form-row">
-          <label for="logo" class="form-label">Logo</label>
-          <input
-            type="file"
-            id="logo"
-            name="logo"
-            accept="image/*"
-            class="form-input-file"
-          />
-          {
-            profile?.firm_logo_url && (
-              <div class="logo-preview">
-                <img src={profile.firm_logo_url} alt="Logo" />
-              </div>
-            )
-          }
-        </div>
-
-        <div class="form-row">
-          <label for="calendar_link" class="form-label">Link de Agenda</label>
-          <input
-            type="url"
-            id="calendar_link"
-            name="calendar_link"
-            value={profile?.calendar_link || ""}
-            placeholder="https://calendly.com/tu-usuario"
-            class="form-input"
-          />
-          <span class="form-hint">
-            Este link se mostrará al cliente al final del proceso de bienvenida
-          </span>
-        </div>
-
-        <button type="submit" class="submit-btn"> Guardar Cambios </button>
-      </form>
-
-      <div id="successMessage" class="success-toast">
-        Perfil actualizado correctamente
+    <form id="profileForm" class="content-form">
+      <div class="form-row">
+        <label for="firm_name" class="form-label">Nombre del Despacho</label>
+        <input
+          type="text"
+          id="firm_name"
+          name="firm_name"
+          value={profile?.firm_name || ""}
+          required
+          class="form-input"
+        />
       </div>
-    </main>
-  </div>
+
+      <div class="form-row">
+        <label for="logo" class="form-label">Logo</label>
+        <input
+          type="file"
+          id="logo"
+          name="logo"
+          accept="image/*"
+          class="form-input-file"
+        />
+        {
+          profile?.firm_logo_url && (
+            <div class="logo-preview">
+              <img src={profile.firm_logo_url} alt="Logo" />
+            </div>
+          )
+        }
+      </div>
+
+      <div class="form-row">
+        <label for="calendar_link" class="form-label">Link de Agenda</label>
+        <input
+          type="url"
+          id="calendar_link"
+          name="calendar_link"
+          value={profile?.calendar_link || ""}
+          placeholder="https://calendly.com/tu-usuario"
+          class="form-input"
+        />
+        <span class="form-hint">
+          Este link se mostrará al cliente al final del proceso de bienvenida
+        </span>
+      </div>
+
+      <button type="submit" class="submit-btn"> Guardar Cambios </button>
+    </form>
+
+    <div id="successMessage" class="success-toast">
+      Perfil actualizado correctamente
+    </div>
+  </main>
 </Layout>
 
 <style>

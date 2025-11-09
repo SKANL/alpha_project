@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../lib/supabase";
+import type { Client, ClientStatus } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request }) => {
   const { token } = await request.json();

@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../lib/supabase";
+import type { SubmitAnswersData } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request }) => {
-  const { token, answers } = await request.json();
+  const { token, answers }: { token: string } & SubmitAnswersData = await request.json();
 
   if (!token || !answers || !Array.isArray(answers)) {
     return new Response(

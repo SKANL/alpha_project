@@ -19,51 +19,40 @@ if (session.error || !session.data.user) {
   return Astro.redirect("/auth/signin");
 }
 
-const clientId = Astro.url.searchParams.get("id");
+const { id } = Astro.params;
+const clientId = id;
 if (!clientId) {
   return Astro.redirect("/dashboard/clients");
 }
 
 const user = session.data.user;
 
-const { data: client } = await supabase
-  .from("clients")
-  .select("*")
-  .eq("id", clientId)
-  .eq("user_id", user.id)
-  .single();
+// Get expediente data using API
+const expedienteResponse = await fetch(`${Astro.url.origin}/api/clients/${clientId}/expediente`, {
+  method: 'GET',
+  headers: {
+    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
+  }
+});
 
-if (!client) {
+if (!expedienteResponse.ok) {
   return Astro.redirect("/dashboard/clients");
 }
 
-const { data: documents } = await supabase
-  .from("client_documents")
-  .select("*")
-  .eq("client_id", clientId);
-
-const { data: answers } = await supabase
-  .from("client_answers")
-  .select(`
-    *,
-    questions (
-      question_text,
-      order_index
-    )
-  `)
-  .eq("client_id", clientId)
-  .order("questions(order_index)");
+const expedienteData = await expedienteResponse.json();
+const client = expedienteData.client;
+const documents = expedienteData.documents;
+const answers = expedienteData.answers;
 ---
 
 <Layout title={`Expediente: ${client.client_name}`}>
-  <div class="dashboard-container">
-    <Navigation currentPage="clients" />
-    
-    <main class="dashboard-main">
-      <div class="page-header">
-        <h1 class="page-title">Expediente: {client.client_name}</h1>
-        <p class="page-subtitle">{client.case_name}</p>
-      </div>
+  <Navigation currentPage="clients" />
+  
+  <main class="dashboard-main">
+    <div class="page-header">
+      <h1 class="page-title">Expediente: {client.client_name}</h1>
+      <p class="page-subtitle">{client.case_name}</p>
+    </div>
 
       <div class="action-bar">
         <a href="/dashboard/clients" class="back-link">
@@ -118,7 +107,7 @@ const { data: answers } = await supabase
           
           {documents && documents.length > 0 ? (
             <div class="documents-list">
-              {documents.map((doc) => (
+              {documents.map((doc: any) => (
                 <div class="document-item">
                   <div class="document-info">
                     <h3 class="document-type">{doc.document_type.replace('_', ' ').toUpperCase()}</h3>
@@ -155,7 +144,6 @@ const { data: answers } = await supabase
         </div>
       </div>
     </main>
-  </div>
 </Layout>
 
 <style>

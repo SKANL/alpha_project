@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../lib/supabase";
+import type { SignContractData, Client } from "../../../lib/types";
 import crypto from "crypto";
 
 export const POST: APIRoute = async ({ request }) => {
-  const { token, signature_data, ip_address } = await request.json();
+  const { token, signature_data, ip_address }: SignContractData & { token: string } = await request.json();
 
   if (!token || !signature_data) {
     return new Response(

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../../../lib/supabase";
 
-export const GET: APIRoute = async ({ url, cookies }) => {
+export const GET: APIRoute = async ({ params, cookies }) => {
   const accessToken = cookies.get("sb-access-token");
   const refreshToken = cookies.get("sb-refresh-token");
 
@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ url, cookies }) => {
     });
   }
 
-  const clientId = url.searchParams.get("id");
+  const clientId = params.id;
 
   if (!clientId) {
     return new Response(JSON.stringify({ error: "Client ID is required" }), {

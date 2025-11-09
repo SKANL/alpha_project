@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../../lib/supabase";
+import type { Client, ClientPortalData } from "../../../lib/types";
 
 export const GET: APIRoute = async ({ url }) => {
   const token = url.searchParams.get("token");
