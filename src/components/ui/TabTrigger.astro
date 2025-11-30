@@ -1,0 +1,20 @@
+---
+interface Props {
+    value: string;
+    class?: string;
+}
+
+const { value, class: className } = Astro.props;
+---
+
+<button
+    type="button"
+    data-tab-trigger={value}
+    class:list={[
+        "px-6 py-3 text-sm font-light tracking-widest uppercase border-b-2 transition-colors duration-200 hover:text-content-primary",
+        "text-content-secondary border-transparent", // Default state
+        className,
+    ]}
+>
+    <slot />
+</button>

@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { Client, DocumentType, SignContractData, SubmitAnswersData } from "../lib/types";
+import type { DocumentType } from "../lib/types";
 import crypto from "crypto";
 
 export class PortalService {

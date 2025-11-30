@@ -33,191 +33,88 @@ if (accessToken && refreshToken) {
     profile = null;
   }
 }
+
+const navItems = [
+  { href: "/dashboard", label: "Panel", id: "dashboard" },
+  { href: "/dashboard/profile", label: "Despacho", id: "profile" },
+  { href: "/dashboard/clients", label: "Clientes", id: "clients" },
+  {
+    href: "/dashboard/templates/contracts",
+    label: "Contratos",
+    id: "contracts",
+  },
+  {
+    href: "/dashboard/templates/questionnaires",
+    label: "Cuestionarios",
+    id: "questionnaires",
+  },
+];
 ---
 
-<nav class="sidebar">
-  <div class="sidebar-header">
+<nav
+  class="fixed left-0 top-0 h-screen w-60 flex flex-col bg-surface-card border-r border-border overflow-hidden"
+>
+  <!-- Header -->
+  <div class="p-8 border-b border-border-weak">
     {
       profile?.firm_logo_url ? (
-        <div class="logo-preview">
+        <div class="mb-4 bg-white rounded p-2 inline-block">
           <Image
             src={profile.firm_logo_url}
             alt={profile.firm_name || "Logo"}
             width={32}
             height={32}
-            class="logo-img"
+            class="w-8 h-8 object-contain"
           />
         </div>
       ) : (
-        <div class="logo-mark" />
+        <div class="w-8 h-8 bg-gradient-to-br from-white to-neutral-500 rounded mb-4" />
       )
     }
 
-    <h1 class="logo-text">{profile?.firm_name || "LEGAL STUDIO"}</h1>
+    <h1
+      class="text-sm font-light tracking-widest uppercase text-content-primary"
+    >
+      {profile?.firm_name || "LEGAL STUDIO"}
+    </h1>
   </div>
 
-  <div class="nav-section">
-    <a
-      href="/dashboard"
-      class={`nav-item ${currentPage === "dashboard" ? "active" : ""}`}
-    >
-      <span class="nav-label">Panel</span>
-    </a>
-
-    <a
-      href="/dashboard/profile"
-      class={`nav-item ${currentPage === "profile" ? "active" : ""}`}
-    >
-      <span class="nav-label">Despacho</span>
-    </a>
-
-    <a
-      href="/dashboard/clients"
-      class={`nav-item ${currentPage === "clients" ? "active" : ""}`}
-    >
-      <span class="nav-label">Clientes</span>
-    </a>
-
-    <a
-      href="/dashboard/templates/contracts"
-      class={`nav-item ${currentPage === "contracts" ? "active" : ""}`}
-    >
-      <span class="nav-label">Contratos</span>
-    </a>
-
-    <a
-      href="/dashboard/templates/questionnaires"
-      class={`nav-item ${currentPage === "questionnaires" ? "active" : ""}`}
-    >
-      <span class="nav-label">Cuestionarios</span>
-    </a>
+  <!-- Links -->
+  <div class="flex-1 py-12 flex flex-col gap-2">
+    {
+      navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            "relative block px-8 py-4 text-sm font-light tracking-wider transition-all duration-300 hover:text-content-primary",
+            currentPage === item.id
+              ? "text-content-primary"
+              : "text-content-secondary",
+          ]}
+        >
+          <span
+            class:list={[
+              "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 bg-content-primary transition-all duration-300",
+              currentPage === item.id ? "h-8" : "h-0 group-hover:h-6",
+            ]}
+          />
+          {item.label}
+        </a>
+      ))
+    }
   </div>
 
-  <form action="/api/auth/signout" method="post" class="sidebar-footer">
-    <button type="submit" class="nav-item logout">
-      <span class="nav-label">Salir</span>
+  <!-- Footer -->
+  <form
+    action="/api/auth/signout"
+    method="post"
+    class="p-8 border-t border-border-weak"
+  >
+    <button
+      type="submit"
+      class="text-sm font-light tracking-wider text-content-muted hover:text-status-error transition-colors duration-300"
+    >
+      Salir
     </button>
   </form>
 </nav>
-
-<style>
-  .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 240px;
-    height: 100vh;
-    background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .sidebar-header {
-    padding: 3rem 2rem 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .logo-mark {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #fff 0%, #999 100%);
-    border-radius: 2px;
-    margin-bottom: 1rem;
-  }
-
-  .logo-preview img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    display: block;
-    margin-bottom: 1rem;
-    border-radius: 2px;
-    background: #fff;
-  }
-
-  .logo-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0;
-  }
-
-  .nav-section {
-    flex: 1;
-    padding: 3rem 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .nav-item {
-    position: relative;
-    display: block;
-    padding: 1rem 2rem;
-    text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: none;
-    background: transparent;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .nav-item::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 2px;
-    height: 0;
-    background: #fff;
-    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .nav-item:hover::before {
-    height: 24px;
-  }
-
-  .nav-item.active::before {
-    height: 32px;
-  }
-
-  .nav-label {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.5);
-    transition: color 0.3s ease;
-  }
-
-  .nav-item:hover .nav-label {
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .nav-item.active .nav-label {
-    color: #fff;
-    font-weight: 400;
-  }
-
-  .sidebar-footer {
-    padding: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .nav-item.logout {
-    padding: 1rem 0;
-  }
-
-  .nav-item.logout .nav-label {
-    color: rgba(255, 255, 255, 0.3);
-  }
-
-  .nav-item.logout:hover .nav-label {
-    color: rgba(239, 68, 68, 0.8);
-  }
-</style>

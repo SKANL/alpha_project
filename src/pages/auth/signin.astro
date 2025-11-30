@@ -1,5 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Button from "@/components/ui/Button.astro";
+import Input from "@/components/ui/Input.astro";
 
 const { user } = Astro.locals;
 
@@ -10,59 +12,58 @@ if (user) {
 
 <Layout title="Sign in">
   <div class="min-h-screen flex items-center justify-center px-4 py-8">
-    <div class="w-full max-w-sm" style="max-width: 280px;">
+    <div class="w-full max-w-sm animate-fade-in-up">
       <!-- Header -->
-      <div class="form-header">
-        <h1>ようこそ</h1>
-        <p>sign in</p>
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-light tracking-zen text-content-primary mb-1">
+          ようこそ
+        </h1>
+        <p
+          class="text-xs font-light tracking-widest uppercase text-content-secondary"
+        >
+          sign in
+        </p>
       </div>
 
       <!-- Divider -->
-      <div class="form-divider"></div>
+      <div class="h-px bg-border-weak w-full mb-8"></div>
 
       <!-- Form -->
-      <form action="/api/auth/signin" method="post" class="form-container">
-        <!-- Email Group -->
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input
-            type="email"
-            name="email"
-            id="email"
-            placeholder="name@example.com"
-            required
-            class="transition-all duration-300"
-          />
-        </div>
+      <form action="/api/auth/signin" method="post" class="flex flex-col gap-6">
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          id="email"
+          placeholder="name@example.com"
+          required
+        />
 
-        <!-- Password Group -->
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="••••••"
-            required
-            class="transition-all duration-300"
-          />
-        </div>
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          id="password"
+          placeholder="••••••"
+          required
+        />
 
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="btn-primary mt-3 w-full uppercase text-xs font-light tracking-widest py-1.5 transition-all"
-        >
-          Sign In
-        </button>
+        <Button type="submit" variant="primary" block class="mt-2">
+          SIGN IN
+        </Button>
       </form>
 
       <!-- Divider -->
-      <div class="form-divider"></div>
+      <div class="h-px bg-border-weak w-full my-8"></div>
 
       <!-- Footer -->
-      <div class="form-footer">
-        <p><a href="/auth/register">create account</a></p>
+      <div class="text-center">
+        <a
+          href="/auth/register"
+          class="text-xs font-light tracking-widest text-content-secondary hover:text-brand transition-colors duration-300 uppercase"
+        >
+          create account
+        </a>
       </div>
     </div>
   </div>

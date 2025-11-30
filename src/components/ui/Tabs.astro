@@ -1,0 +1,84 @@
+---
+interface Props {
+    defaultValue: string;
+    class?: string;
+}
+
+const { defaultValue, class: className } = Astro.props;
+---
+
+<div
+    class:list={["w-full", className]}
+    data-tabs-container
+    data-default={defaultValue}
+>
+    <div class="flex border-b border-border-weak mb-8">
+        <slot name="list" />
+    </div>
+    <div class="relative">
+        <slot name="content" />
+    </div>
+</div>
+
+<script>
+    function initTabs() {
+        const containers = document.querySelectorAll("[data-tabs-container]");
+
+        containers.forEach((container) => {
+            const triggers = container.querySelectorAll("[data-tab-trigger]");
+            const contents = container.querySelectorAll("[data-tab-content]");
+
+            function setActive(value: string) {
+                // Update triggers
+                triggers.forEach((trigger) => {
+                    if ((trigger as HTMLElement).dataset.tabTrigger === value) {
+                        trigger.setAttribute("data-state", "active");
+                        trigger.classList.add(
+                            "text-content-primary",
+                            "border-content-primary",
+                        );
+                        trigger.classList.remove(
+                            "text-content-secondary",
+                            "border-transparent",
+                        );
+                    } else {
+                        trigger.setAttribute("data-state", "inactive");
+                        trigger.classList.remove(
+                            "text-content-primary",
+                            "border-content-primary",
+                        );
+                        trigger.classList.add(
+                            "text-content-secondary",
+                            "border-transparent",
+                        );
+                    }
+                });
+
+                // Update contents
+                contents.forEach((content) => {
+                    if ((content as HTMLElement).dataset.tabContent === value) {
+                        content.classList.remove("hidden");
+                    } else {
+                        content.classList.add("hidden");
+                    }
+                });
+            }
+
+            // Init
+            const defaultValue = (container as HTMLElement).dataset.default;
+            if (defaultValue) setActive(defaultValue);
+
+            // Events
+            triggers.forEach((trigger) => {
+                trigger.addEventListener("click", () => {
+                    const value = (trigger as HTMLElement).dataset.tabTrigger;
+                    if (value) setActive(value);
+                });
+            });
+        });
+    }
+
+    // Run on load and after Astro swaps
+    initTabs();
+    document.addEventListener("astro:page-load", initTabs);
+</script>

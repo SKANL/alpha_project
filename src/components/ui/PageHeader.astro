@@ -1,0 +1,21 @@
+---
+interface Props {
+    title: string;
+    subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+---
+
+<header class="mb-12 animate-fade-in-up">
+    <h1 class="text-3xl font-light tracking-zen text-content-primary mb-2">
+        {title}
+    </h1>
+    {
+        subtitle && (
+            <p class="text-sm font-light tracking-wider text-content-secondary uppercase">
+                {subtitle}
+            </p>
+        )
+    }
+</header>

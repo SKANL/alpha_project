@@ -1,3 +1,12 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+import "@/styles/global.css";
+---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -5,358 +14,29 @@
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>Lawyer</title>
+    <title>{title} | Lawyer</title>
   </head>
-  <body>
+  <body
+    class="bg-surface-base text-content-primary font-sans antialiased min-h-screen"
+  >
     <slot />
   </body>
 </html>
 
 <style is:global>
-  /* Keyframes - Animaciones Minimalistas Zen */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* Minimal reset for scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
-
-  @keyframes slideInDivider {
-    from {
-      width: 0;
-      opacity: 0;
-    }
-    to {
-      width: 100%;
-      opacity: 0.4;
-    }
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
   }
-
-  @keyframes labelFloat {
-    from {
-      transform: translateY(0);
-    }
-    to {
-      transform: translateY(-2px);
-    }
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
   }
-
-  @keyframes subtleGlow {
-    0%, 100% {
-      box-shadow: 0 0 0 0 var(--accent-transparent-lighter);
-    }
-    50% {
-      box-shadow: 0 0 0 4px var(--accent-transparent-lighter);
-    }
-  }
-
-  :root {
-    /* Colores de Acento Principales */
-    --accent-light: #C84C4C;
-    --accent-light-hover: #B34444;
-    --accent-dark: #D86C6C;
-
-    /* Colores de Texto - Modo Claro */
-    --text-light-primary: #2E2E2E;
-    --text-light-secondary: #6B6B6B;
-
-    /* Colores de Texto - Modo Oscuro */
-    --text-dark-primary: #E0E0E0;
-    --text-dark-secondary: #9E9E9E;
-
-    /* Colores de Texto Especiales */
-    --text-white: #FFFFFF;
-
-    /* Colores de Fondo - Modo Claro */
-    --bg-light-main: #F9F9F9;
-    --bg-light-card: #FFFFFF;
-
-    /* Colores de Fondo - Modo Oscuro */
-    --bg-dark-main: #1A1A1A;
-    --bg-dark-card: #242424;
-
-    /* Colores de Bordes y Separadores - Modo Claro */
-    --border-light: #EAEAEA;
-
-    /* Colores de Bordes y Separadores - Modo Oscuro */
-    --border-dark: #3A3A3A;
-
-    /* Colores de Estado de Error */
-    --error-text: #EF4444;
-    --error-text-light: #B91C1C;
-    --error-bg-light: #FEE2E2;
-    --error-border-light: #FECACA;
-    --error-text-dark: #FECACA;
-
-    /* Colores con Transparencia */
-    --accent-transparent-light: rgba(200, 76, 76, 0.1);
-    --accent-transparent-lighter: rgba(200, 76, 76, 0.05);
-    --dark-transparent-light: rgba(0, 0, 0, 0.05);
-    --light-transparent: rgba(255, 255, 255, 0.1);
-  }
-
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--bg-dark-main);
-    color: var(--text-dark-primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Tipografía Base */
-  h1, h2, h3, h4, h5, h6 {
-    color: var(--text-dark-primary);
-    margin: 0;
-    font-weight: 600;
-  }
-
-  h3 {
-    color: var(--text-dark-secondary);
-  }
-
-  p {
-    margin: 0;
-    line-height: 1.6;
-  }
-
-  /* Enlaces */
-  a {
-    color: var(--accent-light);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-
-  a:hover {
-    color: var(--accent-light-hover);
-  }
-
-  /* Botones */
-  button {
-    cursor: pointer;
-    border: none;
-    border-radius: 0.375rem;
-    transition: all 0.2s ease;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
-  /* Botón Primario */
-  button.btn-primary {
-    background-color: var(--accent-light);
-    color: var(--text-white);
-    padding: 0.6rem 1.5rem;
-    letter-spacing: 0.08em;
-    font-weight: 300;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  button.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  button.btn-primary:hover {
-    background-color: var(--accent-light-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(200, 76, 76, 0.2);
-  }
-
-  button.btn-primary:hover::before {
-    width: 300px;
-    height: 300px;
-  }
-
-  button.btn-primary:active {
-    transform: translateY(0) scale(0.98);
-  }
-
-  /* Botón Secundario */
-  button.btn-secondary {
-    background-color: var(--bg-dark-card);
-    color: var(--text-dark-primary);
-    padding: 0.75rem 1.5rem;
-    border: 1px solid var(--border-dark);
-  }
-
-  button.btn-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  /* Inputs y Formularios */
-  input,
-  textarea,
-  select {
-    background-color: var(--bg-dark-card);
-    border: 1px solid var(--border-dark);
-    color: var(--text-dark-primary);
-    padding: 0.6rem 0.8rem;
-    border-radius: 0.375rem;
-    font-family: inherit;
-    font-size: 0.8rem;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  input:focus,
-  textarea:focus,
-  select:focus {
-    outline: none;
-    border-color: var(--accent-light);
-    box-shadow: 0 0 0 3px var(--accent-transparent-lighter);
-    background-color: rgba(200, 76, 76, 0.02);
-    transform: translateY(-2px);
-  }
-
-  input::placeholder {
-    color: var(--text-dark-secondary);
-    transition: opacity 0.3s ease;
-  }
-
-  input:focus::placeholder {
-    opacity: 0.4;
-  }
-
-  /* Forma elegante minimalista - Inspiración Zen Japonesa */
-  .form-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 16rem;
-    margin: 0 auto;
-    animation: fadeInUp 1s ease-out 0.2s both;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    animation: fadeInUp 1s ease-out forwards;
-  }
-
-  .form-group:nth-child(1) {
-    animation-delay: 0.3s;
-  }
-
-  .form-group:nth-child(2) {
-    animation-delay: 0.4s;
-  }
-
-  .form-group label {
-    font-size: 0.75rem;
-    font-weight: 400;
-    color: var(--text-dark-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    opacity: 0.9;
-    transition: all 0.3s ease;
-  }
-
-  .form-group:hover label {
-    opacity: 1;
-    transform: translateY(-1px);
-  }
-
-  .form-header {
-    text-align: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    animation: fadeInUp 0.8s ease-out;
-  }
-
-  .form-header h1 {
-    font-size: 1.75rem;
-    margin-bottom: 0.25rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    opacity: 1;
-  }
-
-  .form-header p {
-    color: var(--text-dark-secondary);
-    font-size: 0.8rem;
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    opacity: 0.8;
-  }
-
-  .form-divider {
-    height: 4px;
-    background: var(--border-dark);
-    margin: 0.75rem 0;
-    opacity: 0.6;
-    animation: slideInDivider 1.2s ease-out;
-  }
-
-  .form-footer {
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-dark-secondary);
-    font-weight: 400;
-    opacity: 0.9;
-    letter-spacing: 0.03em;
-    animation: fadeInUp 1s ease-out 0.5s both;
-  }
-
-  .form-footer a {
-    color: var(--accent-light);
-    font-weight: 400;
-    opacity: 1;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .form-footer a:hover {
-    opacity: 0.8;
-    transform: translateY(-1px);
-  }
-
-  /* Componentes de Tarjeta */
-  .card {
-    background-color: var(--bg-dark-card);
-    border: 1px solid var(--border-dark);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-  }
-
-  /* Componentes de Error */
-  .error-box {
-    background-color: var(--error-bg-light);
-    border: 1px solid var(--error-border-light);
-    border-radius: 0.375rem;
-    padding: 1rem;
-    margin: 1rem 0;
-  }
-
-  .error-box p {
-    color: var(--error-text-light);
-  }
-
-  .error-text {
-    color: var(--error-text);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
-
-  /* Separadores */
-  hr {
-    border: none;
-    border-top: 1px solid var(--border-dark);
-    margin: 1rem 0;
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444;
   }
 </style>

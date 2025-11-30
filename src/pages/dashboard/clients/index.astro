@@ -1,12 +1,14 @@
 ---
-import Layout from "../../../layouts/Dashboard.astro";
-import Navigation from "../../../components/Navigation.astro";
-import { ClientService } from "../../../services/ClientService";
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+import Button from "@/components/ui/Button.astro";
+import Table from "@/components/ui/Table.astro";
+import Badge from "@/components/ui/Badge.astro";
+import { ClientService } from "@/services/ClientService";
 
-// Middleware already validates session and injects user into locals
 const { user } = Astro.locals;
 
-// If for some reason middleware didn't catch it (shouldn't happen with correct config)
 if (!user) {
   return Astro.redirect("/auth/signin");
 }
@@ -17,185 +19,112 @@ const clients = await ClientService.getClients(user.id);
 <Layout title="Clientes">
   <Navigation currentPage="clients" />
 
-  <main class="dashboard-main">
-    <header class="page-header">
-      <h1 class="page-title">Clientes</h1>
-      <p class="page-subtitle">Gestión de expedientes y salas de bienvenida</p>
-    </header>
+  <main class="flex-1 ml-60 p-16 max-w-7xl">
+    <PageHeader
+      title="Clientes"
+      subtitle="Gestión de expedientes y salas de bienvenida"
+    />
 
-    <div class="action-bar">
-      <a href="/dashboard/clients/new" class="primary-action">
-        Nueva Sala de Bienvenida
-      </a>
+    <div class="mb-12 pb-8 border-b border-border-weak">
+      <Button href="/dashboard/clients/new" variant="primary">
+        NUEVA SALA DE BIENVENIDA
+      </Button>
     </div>
 
     {
       clients && clients.length > 0 ? (
-        <table class="data-table">
-          <thead>
+        <Table>
+          <tr slot="header">
+            <th>Cliente</th>
+            <th>Caso</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+          {clients.map((client) => (
             <tr>
-              <th>Cliente</th>
-              <th>Caso</th>
-              <th>Estado</th>
-              <th>Fecha</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr>
-                <td class="table-primary">{client.client_name}</td>
-                <td>{client.case_name}</td>
-                <td>
-                  <span class={`status-badge ${client.status}`}>
-                    {client.status === "pending" ? "Pendiente" : "Completado"}
-                  </span>
-                </td>
-                <td class="table-date">
-                  {new Date(client.created_at).toLocaleDateString("es-MX")}
-                </td>
-                <td>
-                  <div class="table-actions">
-                    {client.status === "pending" ? (
-                      <button
-                        class="action-link copy-link-btn"
-                        data-token={client.magic_link_token}
-                        type="button"
-                      >
-                        Copiar Link
-                      </button>
-                    ) : (
-                      <a
-                        href={`/dashboard/clients/${client.id}/expediente`}
-                        class="action-link"
-                      >
-                        Ver Expediente
-                      </a>
-                    )}
+              <td class="font-medium text-content-primary">
+                {client.client_name}
+              </td>
+              <td>{client.case_name}</td>
+              <td>
+                <Badge
+                  variant={client.status === "pending" ? "warning" : "success"}
+                >
+                  {client.status === "pending" ? "Pendiente" : "Completado"}
+                </Badge>
+              </td>
+              <td>{new Date(client.created_at).toLocaleDateString("es-MX")}</td>
+              <td class="text-right">
+                <div class="flex justify-end gap-4 items-center">
+                  {client.status === "pending" ? (
                     <button
-                      class="action-link delete delete-client-btn"
-                      data-id={client.id}
-                      data-name={client.client_name}
+                      class="text-xs font-light text-brand hover:text-brand-hover transition-colors copy-link-btn"
+                      data-token={client.magic_link_token}
                       type="button"
                     >
-                      Eliminar
+                      COPIAR LINK
                     </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  ) : (
+                    <a
+                      href={`/dashboard/clients/${client.id}/expediente`}
+                      class="text-xs font-light text-content-secondary hover:text-content-primary transition-colors"
+                    >
+                      VER EXPEDIENTE
+                    </a>
+                  )}
+                  <button
+                    class="text-xs font-light text-content-muted hover:text-status-error transition-colors delete-client-btn"
+                    data-id={client.id}
+                    data-name={client.client_name}
+                    type="button"
+                  >
+                    ELIMINAR
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </Table>
       ) : (
-        <div class="empty-state">
-          <h3 class="empty-title">No hay clientes aún</h3>
-          <p class="empty-text">
+        <div class="py-24 text-center">
+          <h3 class="text-2xl font-light text-content-secondary mb-4">
+            No hay clientes aún
+          </h3>
+          <p class="text-sm font-light text-content-muted mb-12">
             Crea tu primera sala de bienvenida para comenzar
           </p>
-          <a href="/dashboard/clients/new" class="empty-action">
-            Nueva Sala de Bienvenida
-          </a>
+          <Button href="/dashboard/clients/new" variant="secondary">
+            NUEVA SALA DE BIENVENIDA
+          </Button>
         </div>
       )
     }
 
-    <div id="notification" class="notification"></div>
+    <div
+      id="notification"
+      class="fixed top-8 right-8 px-8 py-4 bg-surface-highlight border border-border text-content-primary text-sm font-light rounded shadow-lg translate-x-full opacity-0 transition-all duration-300"
+    >
+    </div>
   </main>
 </Layout>
 
-<style>
-  /* Estilos específicos de clients.astro */
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .data-table thead {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .data-table th {
-    padding: 1.5rem 0;
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
-  .data-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    transition: background 0.2s ease;
-  }
-
-  .data-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.01);
-  }
-
-  .data-table td {
-    padding: 2rem 0;
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .table-primary {
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .table-date {
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 0.8125rem;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.6875rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border-radius: 2px;
-  }
-
-  .status-badge.pending {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .status-badge.completed {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-  }
-
-  .table-actions {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-  }
-</style>
-
 <script>
-  // Script optimizado para View Transitions y Event Delegation
   function initPage() {
     const notification = document.getElementById("notification");
-    const mainContainer = document.querySelector(".dashboard-main");
+    const mainContainer = document.querySelector("main");
 
     function showNotification(message: string) {
       if (!notification) return;
       notification.textContent = message;
-      notification.className = "notification show";
+      notification.classList.remove("translate-x-full", "opacity-0");
       setTimeout(() => {
-        notification.classList.remove("show");
+        notification.classList.add("translate-x-full", "opacity-0");
       }, 3000);
     }
 
     if (!mainContainer) return;
 
-    // Usar un solo listener en el contenedor principal (Event Delegation)
     mainContainer.addEventListener("click", async (e) => {
       const target = e.target as HTMLElement;
 
@@ -236,7 +165,6 @@ const clients = await ClientService.getClients(user.id);
 
           if (response.ok) {
             showNotification("Cliente eliminado correctamente");
-            // Recargar suavemente para actualizar la lista
             setTimeout(() => window.location.reload(), 1500);
           } else {
             showNotification("Error al eliminar cliente");
@@ -249,9 +177,6 @@ const clients = await ClientService.getClients(user.id);
     });
   }
 
-  // Inicializar en carga inicial
   initPage();
-
-  // Re-inicializar en navegación de View Transitions
   document.addEventListener("astro:page-load", initPage);
 </script>

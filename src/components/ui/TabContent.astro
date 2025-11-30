@@ -1,0 +1,15 @@
+---
+interface Props {
+    value: string;
+    class?: string;
+}
+
+const { value, class: className } = Astro.props;
+---
+
+<div
+    data-tab-content={value}
+    class:list={["hidden animate-fade-in-up", className]}
+>
+    <slot />
+</div>

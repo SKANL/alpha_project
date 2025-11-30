@@ -1,0 +1,31 @@
+---
+interface Props {
+    class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class={`w-full overflow-x-auto ${className}`}>
+    <table class="w-full text-left border-collapse">
+        <thead class="border-b border-border-weak">
+            <slot name="header" />
+        </thead>
+        <tbody class="divide-y divide-border-weak">
+            <slot />
+        </tbody>
+    </table>
+</div>
+
+<style is:global>
+    /* Helper classes for table cells to keep markup clean */
+    th {
+        @apply py-4 text-xs font-light tracking-widest text-content-secondary uppercase;
+    }
+    td {
+        @apply py-4 text-sm font-light text-content-muted;
+    }
+    tr:hover td {
+        @apply bg-surface-highlight/50;
+    }
+</style>

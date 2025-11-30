@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import crypto from "node:crypto";
 import type { Client, CreateClientDTO } from "../lib/types";
 
 export class ClientService {

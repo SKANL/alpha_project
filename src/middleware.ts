@@ -9,7 +9,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Paths that don't require authentication
     const publicPaths = ["/auth/signin", "/auth/register", "/api/auth", "/portal"];
-    const isPublic = publicPaths.some((path) => url.pathname.startsWith(path));
+    const isPublic = publicPaths.some((path) => url.pathname.startsWith(path)) || url.pathname === "/";
 
     if (!accessToken || !refreshToken) {
         if (!isPublic) {

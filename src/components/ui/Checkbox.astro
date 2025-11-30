@@ -1,0 +1,40 @@
+---
+interface Props extends astroHTML.JSX.InputHTMLAttributes {
+    label: string;
+}
+
+const { label, id, ...rest } = Astro.props;
+const checkboxId = id || Math.random().toString(36).substring(7);
+---
+
+<div class="flex items-center gap-3 group cursor-pointer">
+    <div class="relative flex items-center">
+        <input
+            type="checkbox"
+            id={checkboxId}
+            class="peer h-4 w-4 cursor-pointer appearance-none rounded-sm border border-border bg-surface-card transition-all checked:border-brand checked:bg-brand hover:border-brand-light focus:ring-2 focus:ring-brand-light focus:ring-offset-1 focus:ring-offset-surface-base"
+            {...rest}
+        />
+        <svg
+            class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100"
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <path
+                d="M10 3L4.5 8.5L2 6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+        </svg>
+    </div>
+    <label
+        for={checkboxId}
+        class="cursor-pointer text-sm font-light text-content-secondary transition-colors group-hover:text-content-primary"
+    >
+        {label}
+    </label>
+</div>

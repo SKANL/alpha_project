@@ -1,0 +1,55 @@
+---
+interface Props {
+    id: string;
+    title: string;
+}
+
+const { id, title } = Astro.props;
+---
+
+<div
+    id={id}
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-surface-base/90 backdrop-blur-sm transition-all duration-300"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby={`${id}-title`}
+>
+    <div
+        class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-surface-card border border-border p-8 shadow-2xl transition-all animate-fade-in-up"
+    >
+        <h2
+            id={`${id}-title`}
+            class="text-xl font-light tracking-zen text-content-primary mb-6"
+        >
+            {title}
+        </h2>
+        <slot />
+    </div>
+</div>
+
+<script define:vars={{ id }}>
+    // Simple modal logic
+    const modal = document.getElementById(id);
+
+    // Expose toggle function globally or via event
+    window.addEventListener(`toggle-modal-${id}`, () => {
+        if (modal) {
+            const isHidden = modal.classList.contains("hidden");
+            if (isHidden) {
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            } else {
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+            }
+        }
+    });
+
+    // Close on background click
+    modal?.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+    });
+</script>

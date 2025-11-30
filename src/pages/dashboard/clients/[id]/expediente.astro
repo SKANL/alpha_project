@@ -2,6 +2,13 @@
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
 import { supabase } from "@/lib/supabase";
+import Button from "@/components/ui/Button.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+import Tabs from "@/components/ui/Tabs.astro";
+import TabTrigger from "@/components/ui/TabTrigger.astro";
+import TabContent from "@/components/ui/TabContent.astro";
+import Card from "@/components/ui/Card.astro";
+import type { ClientDocument, ClientAnswer, Question } from "@/lib/types";
 
 const accessToken = Astro.cookies.get("sb-access-token");
 const refreshToken = Astro.cookies.get("sb-refresh-token");
@@ -28,12 +35,15 @@ if (!clientId) {
 const user = session.data.user;
 
 // Get expediente data using API
-const expedienteResponse = await fetch(`${Astro.url.origin}/api/clients/${clientId}/expediente`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
+const expedienteResponse = await fetch(
+  `${Astro.url.origin}/api/clients/${clientId}/expediente`,
+  {
+    method: "GET",
+    headers: {
+      Cookie: `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`,
+    },
+  },
+);
 
 if (!expedienteResponse.ok) {
   return Astro.redirect("/dashboard/clients");
@@ -47,333 +57,180 @@ const answers = expedienteData.answers;
 
 <Layout title={`Expediente: ${client.client_name}`}>
   <Navigation currentPage="clients" />
-  
-  <main class="dashboard-main">
-    <div class="page-header">
-      <h1 class="page-title">Expediente: {client.client_name}</h1>
-      <p class="page-subtitle">{client.case_name}</p>
+
+  <main class="flex-1 ml-60 p-16 max-w-7xl">
+    <div class="mb-8">
+      <Button
+        href="/dashboard/clients"
+        variant="ghost"
+        class="pl-0 hover:pl-2 transition-all"
+      >
+        ← Volver a Clientes
+      </Button>
     </div>
 
-      <div class="action-bar">
-        <a href="/dashboard/clients" class="back-link">
-          Volver a Clientes
-        </a>
-      </div>
+    <PageHeader
+      title={`Expediente: ${client.client_name}`}
+      subtitle={client.case_name}
+    />
 
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="contract">Contrato Firmado</button>
-        <button class="tab-btn" data-tab="documents">Documentos</button>
-        <button class="tab-btn" data-tab="hechos">Hechos</button>
-      </div>
+    <Tabs defaultValue="contract" class="mt-12">
+      <Fragment slot="list">
+        <TabTrigger value="contract">Contrato Firmado</TabTrigger>
+        <TabTrigger value="documents">Documentos</TabTrigger>
+        <TabTrigger value="hechos">Hechos</TabTrigger>
+      </Fragment>
 
-      <div id="contract" class="tab-content active">
-        <div class="content-section">
-          <h2 class="section-title">Contrato Firmado</h2>
-          
-          {client.signature_data ? (
-            <>
-              <div class="signature-section">
-                <h3 class="subsection-label">Firma Digital</h3>
-                <div class="signature-display">
-                  <img src={client.signature_data} alt="Firma" class="signature-image" />
-                </div>
-              </div>
+      <Fragment slot="content">
+        <TabContent value="contract">
+          <Card>
+            <div class="p-8">
+              <h2 class="text-xl font-light text-content-primary mb-8">
+                Contrato Firmado
+              </h2>
 
-              <div class="evidence-box">
-                <h3 class="subsection-label">Sello de Evidencia</h3>
-                <div class="evidence-item">
-                  <span class="evidence-label">Timestamp</span>
-                  <span class="evidence-value">{new Date(client.signature_timestamp!).toLocaleString('es-MX')}</span>
-                </div>
-                <div class="evidence-item">
-                  <span class="evidence-label">IP Address</span>
-                  <span class="evidence-value">{client.signature_ip}</span>
-                </div>
-                <div class="evidence-item">
-                  <span class="evidence-label">Hash (SHA-256)</span>
-                  <code class="evidence-hash">{client.signature_hash}</code>
-                </div>
-              </div>
-            </>
-          ) : (
-            <p class="empty-message">El contrato aún no ha sido firmado.</p>
-          )}
-        </div>
-      </div>
+              {
+                client.signature_data ? (
+                  <div class="space-y-12">
+                    <div>
+                      <h3 class="text-xs font-light tracking-widest uppercase text-content-secondary mb-4">
+                        Firma Digital
+                      </h3>
+                      <div class="bg-white p-8 rounded border border-border inline-block">
+                        <img
+                          src={client.signature_data}
+                          alt="Firma"
+                          class="max-w-[300px]"
+                        />
+                      </div>
+                    </div>
 
-      <div id="documents" class="tab-content">
-        <div class="content-section">
-          <h2 class="section-title">Documentos Subidos</h2>
-          
-          {documents && documents.length > 0 ? (
-            <div class="documents-list">
-              {documents.map((doc: any) => (
-                <div class="document-item">
-                  <div class="document-info">
-                    <h3 class="document-type">{doc.document_type.replace('_', ' ').toUpperCase()}</h3>
-                    <p class="document-date">{new Date(doc.uploaded_at).toLocaleDateString('es-MX')}</p>
+                    <div class="bg-surface-highlight/10 border border-border rounded p-8">
+                      <h3 class="text-xs font-light tracking-widest uppercase text-content-secondary mb-6">
+                        Sello de Evidencia
+                      </h3>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div>
+                          <span class="block text-xs font-light tracking-widest uppercase text-content-muted mb-1">
+                            Timestamp
+                          </span>
+                          <span class="text-sm font-light text-content-primary">
+                            {new Date(
+                              client.signature_timestamp!,
+                            ).toLocaleString("es-MX")}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="block text-xs font-light tracking-widest uppercase text-content-muted mb-1">
+                            IP Address
+                          </span>
+                          <span class="text-sm font-light text-content-primary">
+                            {client.signature_ip}
+                          </span>
+                        </div>
+                        <div class="md:col-span-3">
+                          <span class="block text-xs font-light tracking-widest uppercase text-content-muted mb-1">
+                            Hash (SHA-256)
+                          </span>
+                          <code class="text-xs font-mono text-content-secondary break-all">
+                            {client.signature_hash}
+                          </code>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <a href={doc.file_url} target="_blank" class="action-link">
-                    Descargar
-                  </a>
-                </div>
-              ))}
+                ) : (
+                  <div class="text-center py-12">
+                    <p class="text-content-secondary font-light">
+                      El contrato aún no ha sido firmado.
+                    </p>
+                  </div>
+                )
+              }
             </div>
-          ) : (
-            <p class="empty-message">No hay documentos subidos aún.</p>
-          )}
-        </div>
-      </div>
+          </Card>
+        </TabContent>
 
-      <div id="hechos" class="tab-content">
-        <div class="content-section">
-          <h2 class="section-title">Respuestas del Cuestionario</h2>
-          
-          {answers && answers.length > 0 ? (
-            <div class="answers-list">
-              {answers.map((answer: any) => (
-                <div class="answer-item">
-                  <h3 class="answer-question">{answer.questions.question_text}</h3>
-                  <p class="answer-text">{answer.answer_text}</p>
-                </div>
-              ))}
+        <TabContent value="documents">
+          <Card>
+            <div class="p-8">
+              <h2 class="text-xl font-light text-content-primary mb-8">
+                Documentos Subidos
+              </h2>
+
+              {
+                documents && documents.length > 0 ? (
+                  <div class="grid gap-px bg-border-weak border border-border-weak rounded overflow-hidden">
+                    {documents.map((doc: ClientDocument) => (
+                      <div class="bg-surface-card p-6 flex items-center justify-between hover:bg-surface-highlight/20 transition-colors">
+                        <div>
+                          <h3 class="text-sm font-medium text-content-primary mb-1">
+                            {doc.document_type.replace("_", " ").toUpperCase()}
+                          </h3>
+                          <p class="text-xs font-light text-content-muted">
+                            {new Date(doc.uploaded_at).toLocaleDateString(
+                              "es-MX",
+                            )}
+                          </p>
+                        </div>
+                        <Button
+                          href={doc.file_url}
+                          target="_blank"
+                          variant="ghost"
+                          size="sm"
+                        >
+                          DESCARGAR
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div class="text-center py-12">
+                    <p class="text-content-secondary font-light">
+                      No hay documentos subidos aún.
+                    </p>
+                  </div>
+                )
+              }
             </div>
-          ) : (
-            <p class="empty-message">No hay respuestas aún.</p>
-          )}
-        </div>
-      </div>
-    </main>
+          </Card>
+        </TabContent>
+
+        <TabContent value="hechos">
+          <Card>
+            <div class="p-8">
+              <h2 class="text-xl font-light text-content-primary mb-8">
+                Respuestas del Cuestionario
+              </h2>
+
+              {
+                answers && answers.length > 0 ? (
+                  <div class="space-y-8">
+                    {answers.map(
+                      (answer: ClientAnswer & { questions: Question }) => (
+                        <div class="border-b border-border-weak pb-8 last:border-0 last:pb-0">
+                          <h3 class="text-xs font-light tracking-widest uppercase text-content-secondary mb-3">
+                            {answer.questions.question_text}
+                          </h3>
+                          <p class="text-sm font-light text-content-primary leading-relaxed">
+                            {answer.answer_text}
+                          </p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <div class="text-center py-12">
+                    <p class="text-content-secondary font-light">
+                      No hay respuestas aún.
+                    </p>
+                  </div>
+                )
+              }
+            </div>
+          </Card>
+        </TabContent>
+      </Fragment>
+    </Tabs>
+  </main>
 </Layout>
-
-<style>
-  /* Estilos específicos de expediente.astro */
-  .action-bar {
-    margin-bottom: 2rem;
-  }
-
-  .back-link {
-    font-size: 0.8125rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.5);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .back-link:hover {
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .tabs {
-    display: flex;
-    gap: 3rem;
-    margin-bottom: 3rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .tab-btn {
-    padding: 1rem 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid transparent;
-    color: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: -1px;
-  }
-
-  .tab-btn:hover {
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .tab-btn.active {
-    color: rgba(255, 255, 255, 0.95);
-    border-bottom-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .tab-content {
-    display: none;
-  }
-
-  .tab-content.active {
-    display: block;
-  }
-
-  .content-section {
-    padding: 2rem 0;
-  }
-
-  .section-title {
-    font-size: 1.25rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 3rem;
-  }
-
-  .subsection-label {
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 1.5rem;
-  }
-
-  .signature-section {
-    margin-bottom: 3rem;
-  }
-
-  .signature-display {
-    background: rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-    padding: 2rem;
-    display: inline-block;
-  }
-
-  .signature-image {
-    max-width: 300px;
-    display: block;
-  }
-
-  .evidence-box {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 2px;
-    padding: 2rem;
-  }
-
-  .evidence-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .evidence-item:last-child {
-    margin-bottom: 0;
-  }
-
-  .evidence-label {
-    font-size: 0.6875rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
-  .evidence-value {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .evidence-hash {
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.6);
-    letter-spacing: 0.02em;
-    word-break: break-all;
-    line-height: 1.6;
-  }
-
-  .documents-list {
-    display: grid;
-    gap: 1px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .document-item {
-    background: #0a0a0a;
-    padding: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: background 0.2s ease;
-  }
-
-  .document-item:hover {
-    background: rgba(255, 255, 255, 0.01);
-  }
-
-  .document-info {
-    flex: 1;
-  }
-
-  .document-type {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 0.25rem;
-  }
-
-  .document-date {
-    font-size: 0.75rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.3);
-  }
-
-  .answers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 3rem;
-  }
-
-  .answer-item {
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .answer-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .answer-question {
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 1rem;
-  }
-
-  .answer-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    line-height: 1.8;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .empty-message {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.3);
-    text-align: center;
-    padding: 4rem 2rem;
-  }
-</style>
-
-<script>
-  const tabs = document.querySelectorAll('.tab-btn');
-  const contents = document.querySelectorAll('.tab-content');
-
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const target = (tab as HTMLElement).dataset.tab;
-
-      tabs.forEach((t) => t.classList.remove('active'));
-      contents.forEach((c) => c.classList.remove('active'));
-
-      tab.classList.add('active');
-      document.getElementById(target!)?.classList.add('active');
-    });
-  });
-</script>

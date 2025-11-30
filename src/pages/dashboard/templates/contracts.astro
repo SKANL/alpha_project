@@ -1,6 +1,11 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+import Button from "@/components/ui/Button.astro";
+import Modal from "@/components/ui/Modal.astro";
+import type { ContractTemplate } from "@/lib/types";
+import Input from "@/components/ui/Input.astro";
 import { TemplateService } from "@/services/TemplateService";
 
 const { user } = Astro.locals;
@@ -15,108 +20,114 @@ const contracts = await TemplateService.getContractTemplates(user.id);
 <Layout title="Plantillas de Contratos">
   <Navigation currentPage="contracts" />
 
-  <main class="dashboard-main">
-    <header class="page-header">
-      <h1 class="page-title">Contratos</h1>
-      <p class="page-subtitle">Plantillas reutilizables de contratos</p>
-    </header>
+  <main class="flex-1 ml-60 p-16 max-w-7xl">
+    <PageHeader
+      title="Contratos"
+      subtitle="Plantillas reutilizables de contratos"
+    />
 
-    <div class="action-bar">
-      <button id="openModalBtn" class="primary-action">
-        Nueva Plantilla
-      </button>
+    <div class="mb-12 pb-8 border-b border-border-weak">
+      <Button id="openModalBtn" variant="primary"> NUEVA PLANTILLA </Button>
     </div>
 
     {
       contracts && contracts.length > 0 ? (
-        <div class="templates-grid">
-          {contracts.map((contract: any) => (
-            <div class="template-item">
-              <div class="template-content">
-                <h3 class="template-name">{contract.name}</h3>
-                <p class="template-date">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border-weak border border-border-weak">
+          {contracts.map((contract: ContractTemplate) => (
+            <div class="bg-surface-card p-8 flex flex-col justify-between gap-6 hover:bg-surface-highlight/20 transition-colors duration-200">
+              <div>
+                <h3 class="text-sm font-medium text-content-primary mb-1">
+                  {contract.name}
+                </h3>
+                <p class="text-xs font-light text-content-muted">
                   {new Date(contract.created_at).toLocaleDateString("es-MX")}
                 </p>
               </div>
-              <div class="template-actions">
-                <a href={contract.file_url} target="_blank" class="action-link">
+              <div class="flex gap-6">
+                <Button
+                  href={contract.file_url}
+                  target="_blank"
+                  variant="ghost"
+                  size="sm"
+                  class="text-xs"
+                >
                   Ver PDF
-                </a>
-                <button
-                  class="action-link delete delete-btn"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="text-xs text-content-secondary hover:text-status-error delete-btn"
                   data-id={contract.id}
                 >
                   Eliminar
-                </button>
+                </Button>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div class="empty-state">
-          <h3 class="empty-title">No hay plantillas aún</h3>
-          <p class="empty-text">Sube tu primera plantilla de contrato</p>
+        <div class="py-24 text-center">
+          <h3 class="text-2xl font-light text-content-secondary mb-4">
+            No hay plantillas aún
+          </h3>
+          <p class="text-sm font-light text-content-muted mb-12">
+            Sube tu primera plantilla de contrato
+          </p>
         </div>
       )
     }
 
-    <div id="modal" class="modal">
-      <div class="modal-content">
-        <h2 class="modal-title">Nueva Plantilla de Contrato</h2>
-        <form id="contractForm" class="modal-form">
-          <div class="form-row">
-            <label for="name" class="form-label">Nombre</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              placeholder="Contrato de Servicios"
-              required
-              class="form-input"
-            />
-          </div>
-          <div class="form-row">
-            <label for="file" class="form-label">Archivo PDF</label>
-            <input
-              type="file"
-              id="file"
-              name="file"
-              accept=".pdf"
-              required
-              class="form-input-file"
-            />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="modal-btn secondary" id="closeModalBtn"
-              >Cancelar</button
-            >
-            <button type="submit" class="modal-btn primary">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal id="contractModal" title="Nueva Plantilla de Contrato">
+      <form id="contractForm" class="flex flex-col gap-6">
+        <Input
+          label="Nombre"
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Contrato de Servicios"
+          required
+        />
+
+        <div class="flex flex-col gap-2">
+          <label
+            class="text-xs uppercase tracking-widest text-content-secondary font-light"
+          >
+            Archivo PDF
+          </label>
+          <input
+            type="file"
+            id="file"
+            name="file"
+            accept=".pdf"
+            required
+            class="w-full bg-transparent border-b border-border py-2 text-content-primary text-sm font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
+          />
+        </div>
+
+        <div class="flex justify-end gap-4 mt-4">
+          <Button type="button" variant="ghost" id="closeModalBtn">
+            CANCELAR
+          </Button>
+          <Button type="submit" variant="primary"> GUARDAR </Button>
+        </div>
+      </form>
+    </Modal>
   </main>
 </Layout>
 
-<style>
-  /* Estilos específicos de contracts.astro */
-  .modal-content {
-    max-width: 500px;
-  }
-</style>
-
 <script>
   function initContracts() {
-    const modal = document.getElementById("modal");
+    const modal = document.getElementById("contractModal");
     const form = document.getElementById("contractForm") as HTMLFormElement;
+    const openBtn = document.getElementById("openModalBtn");
+    const closeBtn = document.getElementById("closeModalBtn");
 
-    document.getElementById("openModalBtn")?.addEventListener("click", () => {
-      modal?.classList.add("active");
-    });
+    const toggleModal = () => {
+      window.dispatchEvent(new CustomEvent("toggle-modal-contractModal"));
+    };
 
-    document.getElementById("closeModalBtn")?.addEventListener("click", () => {
-      modal?.classList.remove("active");
-    });
+    openBtn?.addEventListener("click", toggleModal);
+    closeBtn?.addEventListener("click", toggleModal);
 
     form?.addEventListener("submit", async (e) => {
       e.preventDefault();

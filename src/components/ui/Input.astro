@@ -1,0 +1,39 @@
+---
+interface Props extends astroHTML.JSX.InputHTMLAttributes {
+    label?: string;
+    error?: string;
+    hint?: string;
+}
+
+const { label, error, hint, id, class: className, ...rest } = Astro.props;
+const inputId = id || rest.name || Math.random().toString(36).substring(7);
+---
+
+<div class={`flex flex-col gap-1.5 ${className}`}>
+    {
+        label && (
+            <label
+                for={inputId}
+                class="text-xs uppercase tracking-widest text-content-secondary font-light"
+            >
+                {label}
+            </label>
+        )
+    }
+    <input
+        id={inputId}
+        class:list={[
+            "w-full bg-surface-card border rounded px-3 py-2.5 text-content-primary text-sm transition-all duration-300 placeholder:text-content-muted focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-light",
+            error
+                ? "border-status-error focus:border-status-error"
+                : "border-border",
+        ]}
+        {...rest}
+    />
+    {
+        hint && !error && (
+            <span class="text-xs text-content-muted font-light">{hint}</span>
+        )
+    }
+    {error && <span class="text-xs text-status-error">{error}</span>}
+</div>

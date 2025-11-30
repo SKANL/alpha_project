@@ -1,7 +1,12 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+import Button from "@/components/ui/Button.astro";
+import Modal from "@/components/ui/Modal.astro";
+import Input from "@/components/ui/Input.astro";
 import { TemplateService } from "@/services/TemplateService";
+import type { QuestionnaireTemplate } from "@/lib/types";
 
 const { user } = Astro.locals;
 
@@ -15,228 +20,184 @@ const questionnaires = await TemplateService.getQuestionnaireTemplates(user.id);
 <Layout title="Plantillas de Cuestionarios">
   <Navigation currentPage="questionnaires" />
 
-  <main class="dashboard-main">
-    <div class="page-header">
-      <h1 class="page-title">Plantillas de Cuestionarios</h1>
-      <p class="page-subtitle">Gestiona tus cuestionarios de hechos</p>
-    </div>
+  <main class="flex-1 ml-60 p-16 max-w-7xl">
+    <PageHeader
+      title="Cuestionarios"
+      subtitle="Plantillas de preguntas para clientes"
+    />
 
-    <div class="action-bar">
-      <button id="openModalBtn" class="primary-action">
-        Nuevo Cuestionario
-      </button>
+    <div class="mb-12 pb-8 border-b border-border-weak">
+      <Button id="openModalBtn" variant="primary"> NUEVO CUESTIONARIO </Button>
     </div>
 
     {
-      !questionnaires || questionnaires.length === 0 ? (
-        <div class="empty-state">
-          <h3 class="empty-title">No hay cuestionarios aún</h3>
-          <p class="empty-text">Crea tu primer cuestionario</p>
+      questionnaires && questionnaires.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border-weak border border-border-weak">
+          {questionnaires.map(
+            (q: QuestionnaireTemplate & { questions?: any[] }) => (
+              <div class="bg-surface-card p-8 flex flex-col justify-between gap-6 hover:bg-surface-highlight/20 transition-colors duration-200">
+                <div>
+                  <h3 class="text-sm font-medium text-content-primary mb-2">
+                    {q.name}
+                  </h3>
+                  <p class="text-xs font-light text-content-muted">
+                    {q.questions?.length || 0} preguntas
+                  </p>
+                </div>
+                <div class="flex gap-6">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="text-xs text-content-secondary hover:text-status-error delete-btn"
+                    data-id={q.id}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ),
+          )}
         </div>
       ) : (
-        <div class="questionnaires-grid">
-          {questionnaires.map((q: any) => (
-            <div class="questionnaire-item">
-              <div class="questionnaire-content">
-                <h3 class="questionnaire-name">{q.name}</h3>
-                <p class="questionnaire-count">
-                  {q.questions.length}{" "}
-                  {q.questions.length === 1 ? "pregunta" : "preguntas"}
-                </p>
-                <ul class="questions-preview">
-                  {q.questions.slice(0, 3).map((question: any) => (
-                    <li class="question-item">{question.question_text}</li>
-                  ))}
-                  {q.questions.length > 3 && (
-                    <li class="question-more">
-                      + {q.questions.length - 3} más
-                    </li>
-                  )}
-                </ul>
-              </div>
-              <div class="questionnaire-actions">
-                <button class="action-link delete delete-btn" data-id={q.id}>
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
+        <div class="py-24 text-center">
+          <h3 class="text-2xl font-light text-content-secondary mb-4">
+            No hay cuestionarios aún
+          </h3>
+          <p class="text-sm font-light text-content-muted mb-12">
+            Crea tu primer cuestionario
+          </p>
         </div>
       )
     }
 
-    <div id="modal" class="modal">
-      <div class="modal-content">
-        <h2 class="modal-title">Nuevo Cuestionario</h2>
-        <form id="questionnaireForm" class="modal-form">
-          <div class="form-row">
-            <label for="name" class="form-label">Nombre del Cuestionario</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              class="form-input"
-              placeholder="Cuestionario General"
-              required
-            />
-          </div>
-          <div class="form-row">
-            <label class="form-label">Preguntas</label>
-            <div id="questionsContainer" class="questions-container">
-              <input
-                type="text"
-                class="question-input"
-                placeholder="Pregunta 1"
-                required
-              />
-            </div>
-            <button type="button" class="add-question-btn" id="addQuestionBtn">
-              Agregar Pregunta
-            </button>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="modal-btn secondary" id="closeModalBtn"
-              >Cancelar</button
+    <Modal id="questionnaireModal" title="Nuevo Cuestionario">
+      <form id="questionnaireForm" class="flex flex-col gap-6">
+        <Input
+          label="Nombre del Cuestionario"
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Cuestionario de Divorcio"
+          required
+        />
+
+        <div class="flex flex-col gap-4">
+          <div class="flex justify-between items-center">
+            <label
+              class="text-xs uppercase tracking-widest text-content-secondary font-light"
             >
-            <button type="submit" class="modal-btn primary">Guardar</button>
+              Preguntas
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              id="addQuestionBtn"
+              class="text-xs text-brand hover:text-brand-hover p-0 h-auto"
+            >
+              + AGREGAR PREGUNTA
+            </Button>
           </div>
-        </form>
-      </div>
-    </div>
+
+          <div
+            id="questionsContainer"
+            class="flex flex-col gap-4 max-h-[40vh] overflow-y-auto pr-2"
+          >
+            <!-- Questions will be added here -->
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-4 mt-4">
+          <Button type="button" variant="ghost" id="closeModalBtn">
+            CANCELAR
+          </Button>
+          <Button type="submit" variant="primary"> GUARDAR </Button>
+        </div>
+      </form>
+    </Modal>
   </main>
 </Layout>
 
-<style>
-  /* Estilos específicos de questionnaires.astro */
-  .questionnaire-count {
-    font-size: 0.75rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.3);
-    margin-bottom: 1.5rem;
-  }
-
-  .questions-preview {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .question-item {
-    font-size: 0.75rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.4);
-    margin-bottom: 0.5rem;
-    padding-left: 1rem;
-    position: relative;
-  }
-
-  .question-item::before {
-    content: "—";
-    position: absolute;
-    left: 0;
-    color: rgba(255, 255, 255, 0.2);
-  }
-
-  .question-more {
-    font-size: 0.6875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.25);
-    margin-top: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .questions-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .question-input {
-    width: 100%;
-    padding: 1rem 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.875rem;
-    font-weight: 300;
-    transition: border-color 0.3s ease;
-  }
-
-  .question-input:focus {
-    outline: none;
-    border-bottom-color: rgba(255, 255, 255, 0.2);
-  }
-
-  .question-input::placeholder {
-    color: rgba(255, 255, 255, 0.2);
-  }
-
-  .add-question-btn {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.6875rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 2px;
-    align-self: flex-start;
-  }
-
-  .add-question-btn:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-  }
-</style>
-
 <script>
   function initQuestionnaires() {
-    const modal = document.getElementById("modal");
+    const modal = document.getElementById("questionnaireModal");
     const form = document.getElementById(
       "questionnaireForm",
     ) as HTMLFormElement;
-    const container = document.getElementById("questionsContainer");
+    const openBtn = document.getElementById("openModalBtn");
+    const closeBtn = document.getElementById("closeModalBtn");
+    const addQuestionBtn = document.getElementById("addQuestionBtn");
+    const questionsContainer = document.getElementById("questionsContainer");
 
-    document.getElementById("openModalBtn")?.addEventListener("click", () => {
-      modal?.classList.add("active");
-    });
+    const toggleModal = () => {
+      window.dispatchEvent(new CustomEvent("toggle-modal-questionnaireModal"));
+    };
 
-    document.getElementById("closeModalBtn")?.addEventListener("click", () => {
-      modal?.classList.remove("active");
-    });
+    openBtn?.addEventListener("click", toggleModal);
+    closeBtn?.addEventListener("click", toggleModal);
 
-    document.getElementById("addQuestionBtn")?.addEventListener("click", () => {
-      if (!container) return;
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "question-input";
-      input.placeholder = `Pregunta ${container.children.length + 1}`;
-      input.required = true;
-      container.appendChild(input);
-    });
+    let questionCount = 0;
+
+    const addQuestionInput = () => {
+      const div = document.createElement("div");
+      div.className = "flex gap-2 items-start animate-fade-in-up";
+      div.innerHTML = `
+        <div class="flex-1">
+          <input
+            type="text"
+            name="questions[]"
+            placeholder="Escribe la pregunta..."
+            required
+            class="w-full bg-surface-card border border-border rounded px-3 py-2 text-content-primary text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-light"
+          />
+        </div>
+        <button type="button" class="text-content-muted hover:text-status-error p-2 remove-question">
+          ×
+        </button>
+      `;
+
+      div.querySelector(".remove-question")?.addEventListener("click", () => {
+        div.remove();
+      });
+
+      questionsContainer?.appendChild(div);
+      questionCount++;
+    };
+
+    // Add initial question
+    if (questionsContainer && questionsContainer.children.length === 0) {
+      addQuestionInput();
+    }
+
+    addQuestionBtn?.addEventListener("click", addQuestionInput);
 
     form?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nameInput = document.getElementById("name") as HTMLInputElement;
-      const name = nameInput?.value;
-      const questions = Array.from(document.querySelectorAll(".question-input"))
-        .map((input: any) => input.value)
-        .filter((q) => q.trim());
+      const formData = new FormData(form);
+
+      // Get questions array manually since FormData.getAll might behave differently across browsers/environments
+      const questions = Array.from(
+        form.querySelectorAll('input[name="questions[]"]'),
+      )
+        .map((input) => (input as HTMLInputElement).value)
+        .filter(Boolean);
+
+      const data = {
+        name: formData.get("name"),
+        questions: questions,
+      };
 
       try {
         const response = await fetch("/api/templates/questionnaires/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, questions }),
+          body: JSON.stringify(data),
         });
-        if (response.ok) window.location.reload();
-        else alert("Error al crear cuestionario");
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert("Error al crear cuestionario");
+        }
       } catch (error) {
         console.error(error);
         alert("Error al crear cuestionario");

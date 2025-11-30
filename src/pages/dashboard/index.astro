@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+import Card from "@/components/ui/Card.astro";
 import { ProfileService } from "@/services/ProfileService";
 import { ClientService } from "@/services/ClientService";
 import { TemplateService } from "@/services/TemplateService";
@@ -28,184 +30,98 @@ const completedClients =
 <Layout title="Dashboard">
   <Navigation currentPage="dashboard" />
 
-  <main class="dashboard-main">
-    <header class="page-header">
-      <h1 class="page-title">{profile?.firm_name || "Panel de Control"}</h1>
-      <p class="page-subtitle">Vista general de tu despacho</p>
-    </header>
+  <main class="flex-1 ml-60 p-16">
+    <PageHeader
+      title={profile?.firm_name || "Panel de Control"}
+      subtitle="Vista general de tu despacho"
+    />
 
-    <section class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value">{totalClients}</div>
-        <div class="stat-label">Total Clientes</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value">{pendingClients}</div>
-        <div class="stat-label">Pendientes</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-value">{completedClients}</div>
-        <div class="stat-label">Completados</div>
-      </div>
-    </section>
-
-    <section class="templates-section">
-      <div class="template-stat">
-        <span class="template-count">{contractTemplates?.length || 0}</span>
-        <span class="template-text">Plantillas de Contratos</span>
-      </div>
-      <div class="template-stat">
-        <span class="template-count">{questionnaireTemplates?.length || 0}</span
+    <section class="grid grid-cols-3 gap-8 mb-16">
+      <Card hover>
+        <div class="text-5xl font-extralight text-content-primary mb-2">
+          {totalClients}
+        </div>
+        <div
+          class="text-xs font-light tracking-widest uppercase text-content-secondary"
         >
-        <span class="template-text">Plantillas de Cuestionarios</span>
+          Total Clientes
+        </div>
+      </Card>
+
+      <Card hover>
+        <div class="text-5xl font-extralight text-content-primary mb-2">
+          {pendingClients}
+        </div>
+        <div
+          class="text-xs font-light tracking-widest uppercase text-content-secondary"
+        >
+          Pendientes
+        </div>
+      </Card>
+
+      <Card hover>
+        <div class="text-5xl font-extralight text-content-primary mb-2">
+          {completedClients}
+        </div>
+        <div
+          class="text-xs font-light tracking-widest uppercase text-content-secondary"
+        >
+          Completados
+        </div>
+      </Card>
+    </section>
+
+    <section class="flex gap-16 mb-16 py-8 border-y border-border-weak">
+      <div class="flex items-baseline gap-4">
+        <span class="text-3xl font-extralight text-content-primary">
+          {contractTemplates?.length || 0}
+        </span>
+        <span class="text-sm font-light text-content-secondary">
+          Plantillas de Contratos
+        </span>
+      </div>
+      <div class="flex items-baseline gap-4">
+        <span class="text-3xl font-extralight text-content-primary">
+          {questionnaireTemplates?.length || 0}
+        </span>
+        <span class="text-sm font-light text-content-secondary">
+          Plantillas de Cuestionarios
+        </span>
       </div>
     </section>
 
-    <section class="actions-section">
-      <h2 class="section-title">Acciones</h2>
-      <div class="actions-grid">
-        <a href="/dashboard/clients/new" class="action-card primary">
-          <span class="action-label">Nueva Sala de Bienvenida</span>
+    <section class="mt-16">
+      <h2
+        class="text-sm font-light tracking-widest uppercase text-content-secondary mb-8"
+      >
+        Acciones
+      </h2>
+      <div class="grid grid-cols-3 gap-6">
+        <a
+          href="/dashboard/clients/new"
+          class="bg-surface-highlight/50 border border-border-strong rounded p-8 text-center transition-all duration-300 hover:bg-surface-highlight hover:border-border-strong hover:-translate-y-0.5"
+        >
+          <span class="text-sm font-light tracking-zen text-content-primary">
+            Nueva Sala de Bienvenida
+          </span>
         </a>
-        <a href="/dashboard/clients" class="action-card">
-          <span class="action-label">Ver Clientes</span>
+        <a
+          href="/dashboard/clients"
+          class="bg-transparent border border-border-weak rounded p-8 text-center transition-all duration-300 hover:bg-surface-highlight hover:border-border"
+        >
+          <span class="text-sm font-light tracking-zen text-content-primary/80">
+            Ver Clientes
+          </span>
         </a>
-        <a href="/dashboard/profile" class="action-card">
-          <span class="action-label">Configurar Despacho</span>
+        <a
+          href="/dashboard/profile"
+          class="bg-transparent border border-border-weak rounded p-8 text-center transition-all duration-300 hover:bg-surface-highlight hover:border-border"
+        >
+          <span class="text-sm font-light tracking-zen text-content-primary/80">
+            Configurar Despacho
+          </span>
         </a>
       </div>
     </section>
   </main>
 </Layout>
-
-<style>
-  /* Estilos específicos de dashboard.astro */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-    margin-bottom: 4rem;
-  }
-
-  .stat-card {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.02) 0%,
-      rgba(255, 255, 255, 0.01) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 2.5rem 2rem;
-    border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .stat-card:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    transform: translateY(-2px);
-  }
-
-  .stat-value {
-    font-size: 3rem;
-    font-weight: 200;
-    color: #fff;
-    margin-bottom: 0.5rem;
-    line-height: 1;
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-  }
-
-  .page-header {
-    margin-bottom: 4rem;
-  }
-
-  .templates-section {
-    display: flex;
-    gap: 4rem;
-    margin-bottom: 4rem;
-    padding: 2rem 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  }
-
-  .template-stat {
-    display: flex;
-    align-items: baseline;
-    gap: 1rem;
-  }
-
-  .template-count {
-    font-size: 2rem;
-    font-weight: 200;
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .template-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .actions-section {
-    margin-top: 4rem;
-  }
-
-  .section-title {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-    margin-bottom: 2rem;
-  }
-
-  .actions-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-  }
-
-  .action-card {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 2rem 1.5rem;
-    text-decoration: none;
-    text-align: center;
-    border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-  }
-
-  .action-card:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  .action-card.primary {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-
-  .action-card.primary:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.24);
-  }
-
-  .action-label {
-    font-size: 0.875rem;
-    font-weight: 300;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .action-card.primary .action-label {
-    color: rgba(255, 255, 255, 0.95);
-  }
-</style>

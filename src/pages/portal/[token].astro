@@ -1,1013 +1,389 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Button from "@/components/ui/Button.astro";
+import Input from "@/components/ui/Input.astro";
+import Card from "@/components/ui/Card.astro";
+import { supabase } from "@/lib/supabase";
 
 const { token } = Astro.params;
 
 if (!token) {
   return Astro.redirect("/");
 }
+
+// 1. Validate Token & Get Client Data
+const { data: client, error } = await supabase
+  .from("clients")
+  .select(
+    `
+    *,
+    contract_template:contract_templates(*),
+    questionnaire_template:questionnaire_templates(*)
+  `,
+  )
+  .eq("magic_link_token", token)
+  .single();
+
+if (error || !client) {
+  return Astro.redirect("/404");
+}
+
+// 2. Get Profile (Lawyer) Info for branding
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("*")
+  .eq("user_id", client.user_id)
+  .single();
+
+// 3. Determine Current Step
+// steps: 'welcome' | 'contract' | 'questionnaire' | 'documents' | 'calendar' | 'completed'
+let currentStep = "welcome";
+
+if (client.status === "completed") {
+  currentStep = "completed";
+} else if (client.contract_signed) {
+  currentStep = "questionnaire";
+  if (client.questionnaire_answers) {
+    currentStep = "documents";
+    // Check if documents are uploaded (simplified check)
+    // In a real app, we'd check the storage or a 'documents_uploaded' flag
+    // For now, let's assume if they are here, they might be done or uploading
+    // We'll handle state transitions via client-side logic mostly for this single-page flow
+  }
+}
+
+const clientId = client.id;
 ---
 
-<Layout title="Bienvenida">
-  <div id="app" class="welcome-container">
-    <!-- Loading Screen -->
-    <div id="loading" class="loading-screen">
-      <div class="loader"></div>
-      <p class="loading-text">Cargando...</p>
-    </div>
+<Layout title={`Bienvenido | ${profile?.firm_name || "Legal Studio"}`}>
+  <div class="min-h-screen bg-surface-base flex flex-col">
+    <!-- Header -->
+    <header class="py-8 px-4 border-b border-border-weak text-center">
+      {
+        profile?.firm_logo_url && (
+          <img
+            src={profile.firm_logo_url}
+            alt="Logo"
+            class="h-12 mx-auto mb-4 object-contain"
+          />
+        )
+      }
+      <h1
+        class="text-sm font-light tracking-widest uppercase text-content-secondary"
+      >
+        {profile?.firm_name || "LEGAL STUDIO"}
+      </h1>
+    </header>
 
-    <!-- Step 1: Welcome -->
-    <div id="step1" class="step" style="display: none;">
-      <div class="step-wrapper">
-        <div id="firmLogo" class="firm-logo"></div>
-
-        <div class="form-header">
-          <h1 id="firmName">ようこそ</h1>
-          <p id="clientName" class="client-name"></p>
-          <p>welcome</p>
-        </div>
-
-        <div class="form-divider"></div>
-
-        <div class="form-container">
-          <p class="welcome-text">
-            Te guiaremos paso a paso para completar tu proceso de incorporación.
-            Solo tomará unos minutos.
+    <!-- Main Content -->
+    <main class="flex-1 flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl animate-fade-in-up" id="mainContainer">
+        <!-- STEP: WELCOME -->
+        <div id="step-welcome" class="step-content text-center">
+          <h2 class="text-4xl font-light text-content-primary mb-4">
+            Hola, {client.client_name}
+          </h2>
+          <p class="text-lg font-light text-content-secondary mb-12">
+            Bienvenido a tu proceso de alta para el caso <span
+              class="text-content-primary">"{client.case_name}"</span
+            >.
           </p>
-
-          <button class="btn-primary" onclick="nextStep(2)"> Comenzar </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Contract -->
-    <div id="step2" class="step" style="display: none;">
-      <div class="step-wrapper">
-        <div class="form-header">
-          <h1>契約</h1>
-          <p>contrato</p>
-        </div>
-
-        <div class="form-divider"></div>
-
-        <div class="form-container">
-          <div class="contract-viewer">
-            <div class="contract-actions">
-              <p class="contract-help">
-                abre el documento en una nueva pestaña.
-              </p>
-              <a
-                id="openDocumentBtn"
-                class="btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-                href="#">Abrir documento en nueva pestaña</a
+          <div class="grid gap-4 max-w-md mx-auto mb-12 text-left">
+            <div
+              class="flex items-center gap-4 p-4 bg-surface-card border border-border rounded"
+            >
+              <span class="text-brand text-xl">1</span>
+              <span class="text-content-secondary font-light"
+                >Firma de Contrato</span
+              >
+            </div>
+            <div
+              class="flex items-center gap-4 p-4 bg-surface-card border border-border rounded"
+            >
+              <span class="text-brand text-xl">2</span>
+              <span class="text-content-secondary font-light"
+                >Cuestionario Inicial</span
+              >
+            </div>
+            <div
+              class="flex items-center gap-4 p-4 bg-surface-card border border-border rounded"
+            >
+              <span class="text-brand text-xl">3</span>
+              <span class="text-content-secondary font-light"
+                >Carga de Documentos</span
               >
             </div>
           </div>
+          <Button id="startBtn" variant="primary" size="lg"> COMENZAR </Button>
+        </div>
 
-          <div class="signature-section">
-            <label for="signatureCanvas">Tu Firma Digital</label>
-            <canvas id="signatureCanvas"></canvas>
-            <button
-              type="button"
-              class="btn-secondary"
-              onclick="clearSignature()"
+        <!-- STEP: CONTRACT -->
+        <div id="step-contract" class="step-content hidden">
+          <Card>
+            <h3 class="text-xl font-light text-content-primary mb-6">
+              1. Contrato de Servicios
+            </h3>
+            <div
+              class="bg-surface-base border border-border rounded p-4 h-96 overflow-y-auto mb-6 text-sm font-light text-content-secondary leading-relaxed"
             >
-              Limpiar
-            </button>
-          </div>
-
-          <button
-            class="btn-primary"
-            onclick="signContract()"
-            disabled
-            id="signBtn"
-          >
-            Aceptar y Firmar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Documents -->
-    <div id="step3" class="step" style="display: none;">
-      <div class="step-wrapper">
-        <div class="form-header">
-          <h1>書類</h1>
-          <p>documentos</p>
-        </div>
-
-        <div class="form-divider"></div>
-
-        <div class="form-container">
-          <div id="documentsContainer" class="documents-container"></div>
-
-          <button class="btn-primary" onclick="nextStep(4)"> Continuar </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 4: Questionnaire -->
-    <div id="step4" class="step" style="display: none;">
-      <div class="step-wrapper">
-        <div class="form-header">
-          <h1>質問</h1>
-          <p>cuestionario</p>
-        </div>
-
-        <div class="form-divider"></div>
-
-        <div class="form-container questionnaire-container">
-          <div
-            id="questionProgress"
-            class="question-progress"
-            style="display:none;"
-          >
-            <div class="progress-info">
-              <span id="progressText">Pregunta 0 de 0</span>
+              <p class="mb-4">
+                Por favor lee detenidamente el siguiente contrato de servicios
+                legales.
+              </p>
+              <!-- PDF Viewer or Text would go here. For now, a placeholder link -->
+              <div
+                class="flex flex-col items-center justify-center h-full gap-4"
+              >
+                <span class="text-content-muted">Vista previa del contrato</span
+                >
+                <a
+                  href={client.contract_template?.file_url}
+                  target="_blank"
+                  class="text-brand hover:underline"
+                >
+                  Abrir PDF en nueva pestaña
+                </a>
+              </div>
             </div>
-            <div class="progress-track">
-              <div id="progressBar" class="progress-bar" style="width:0%"></div>
+            <div class="flex items-center gap-3 mb-8">
+              <input
+                type="checkbox"
+                id="acceptContract"
+                class="w-5 h-5 accent-brand"
+              />
+              <label
+                for="acceptContract"
+                class="text-sm font-light text-content-secondary"
+              >
+                He leído y acepto los términos y condiciones del contrato.
+              </label>
             </div>
-          </div>
-
-          <div class="question-actions">
-            <button type="button" class="btn-secondary" onclick="nextStep(3)"
-              >Atrás</button
-            >
-          </div>
-
-          <form id="questionnaireForm" class="questionnaire-form" novalidate>
-          </form>
-
-          <div
-            class="nav-row"
-            style="display:flex;gap:0.75rem;margin-top:0.75rem;"
-          >
-            <button
-              id="prevQuestionBtn"
-              type="button"
-              class="btn-secondary"
-              onclick="prevQuestion()">Anterior</button
-            >
-            <button
-              id="nextQuestionBtn"
-              type="button"
-              class="btn-primary"
-              onclick="nextQuestion()">Siguiente</button
-            >
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 5: Complete -->
-    <div id="step5" class="step" style="display: none;">
-      <div class="step-wrapper">
-        <div class="form-header">
-          <h1>完璧</h1>
-          <p>perfecto</p>
+            <div class="flex justify-end">
+              <Button id="signContractBtn" variant="primary" disabled>
+                FIRMAR Y CONTINUAR
+              </Button>
+            </div>
+          </Card>
         </div>
 
-        <div class="form-divider"></div>
+        <!-- STEP: QUESTIONNAIRE -->
+        <div id="step-questionnaire" class="step-content hidden">
+          <Card>
+            <h3 class="text-xl font-light text-content-primary mb-6">
+              2. Cuestionario Inicial
+            </h3>
+            <form id="questionnaireForm" class="flex flex-col gap-6">
+              {
+                client.questionnaire_template?.questions?.map(
+                  (q: string, index: number) => (
+                    <Input label={q} name={`q_${index}`} required />
+                  ),
+                )
+              }
+              <div class="flex justify-end pt-4">
+                <Button type="submit" variant="primary">
+                  ENVIAR RESPUESTAS
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
 
-        <div class="form-container">
-          <div class="success-message">
-            <div class="success-icon">✓</div>
-            <p class="success-text">
-              Tu información ha sido recibida exitosamente. Pronto nos pondremos
-              en contacto contigo.
+        <!-- STEP: DOCUMENTS -->
+        <div id="step-documents" class="step-content hidden">
+          <Card>
+            <h3 class="text-xl font-light text-content-primary mb-6">
+              3. Documentos Requeridos
+            </h3>
+            <p class="text-sm font-light text-content-secondary mb-8">
+              Por favor sube los siguientes documentos en formato PDF o imagen.
             </p>
-          </div>
-
-          <div
-            id="calendarSection"
-            class="calendar-section"
-            style="display: none;"
-          >
-            <div class="form-divider"></div>
-            <p class="calendar-text">Agenda tu primera reunión</p>
-            <a id="calendarLink" href="#" target="_blank" class="btn-primary">
-              Agendar Reunión
-            </a>
-          </div>
+            <form id="docsForm" class="flex flex-col gap-6">
+              {
+                client.required_documents?.map((doc: string) => (
+                  <div class="flex flex-col gap-2">
+                    <label class="text-xs uppercase tracking-widest text-content-secondary font-light">
+                      {doc.replace(/_/g, " ")}
+                    </label>
+                    <input
+                      type="file"
+                      name={doc}
+                      required
+                      class="w-full bg-surface-base border border-border rounded px-3 py-2 text-content-primary text-sm font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
+                    />
+                  </div>
+                ))
+              }
+              <div class="flex justify-end pt-4">
+                <Button type="submit" variant="primary">
+                  SUBIR DOCUMENTOS
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
-      </div>
-    </div>
 
-    <!-- Error Screen -->
-    <div id="errorScreen" class="error-screen" style="display: none;">
-      <div class="step-wrapper">
-        <div class="form-header">
-          <h1>エラー</h1>
-          <p>error</p>
-        </div>
-
-        <div class="form-divider"></div>
-
-        <div class="form-container">
-          <p id="errorMessage" class="error-text">
-            Este link no es válido o ya fue utilizado.
+        <!-- STEP: CALENDAR -->
+        <div id="step-calendar" class="step-content hidden text-center">
+          <h2 class="text-3xl font-light text-content-primary mb-4">
+            ¡Todo listo!
+          </h2>
+          <p class="text-lg font-light text-content-secondary mb-12">
+            Hemos recibido tu información correctamente.
           </p>
+
+          {
+            profile?.calendar_link ? (
+              <div class="animate-fade-in-up">
+                <p class="text-sm font-light text-content-muted mb-6">
+                  Para finalizar, por favor agenda tu cita de bienvenida.
+                </p>
+                <Button
+                  href={profile.calendar_link}
+                  target="_blank"
+                  variant="primary"
+                  size="lg"
+                >
+                  AGENDAR CITA
+                </Button>
+              </div>
+            ) : (
+              <div class="p-8 bg-surface-card border border-border rounded">
+                <p class="text-content-primary">
+                  Nos pondremos en contacto contigo pronto.
+                </p>
+              </div>
+            )
+          }
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </Layout>
 
-<style>
-  /* --- Compact, consolidated styles for portal page --- */
-  :root {
-    --small: 0.75rem;
-    --muted: var(--text-dark-secondary);
+<script define:vars={{ initialStep: currentStep, clientId }}>
+  // State Management
+  const steps = [
+    "welcome",
+    "contract",
+    "questionnaire",
+    "documents",
+    "calendar",
+  ];
+  let currentStepIndex = steps.indexOf(
+    initialStep === "completed" ? "calendar" : initialStep,
+  );
+  if (currentStepIndex === -1) currentStepIndex = 0;
+
+  function showStep(index) {
+    document
+      .querySelectorAll(".step-content")
+      .forEach((el) => el.classList.add("hidden"));
+    const stepId = `step-${steps[index]}`;
+    document.getElementById(stepId)?.classList.remove("hidden");
+    window.scrollTo(0, 0);
   }
 
-  .welcome-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    background: var(--bg-dark-main);
-  }
+  // Initial Render
+  showStep(currentStepIndex);
 
-  .loading-screen,
-  .error-screen {
-    text-align: center;
-    animation: fadeInUp 0.6s ease-out;
-  }
-  .loader {
-    width: 40px;
-    height: 40px;
-    border: 2px solid var(--border-dark);
-    border-top-color: var(--accent-light);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
-  }
-  .loading-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: var(--muted);
-    letter-spacing: 0.05em;
-  }
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
+  // Event Listeners
 
-  .step {
-    width: 100%;
-    max-width: 1200px;
-    animation: fadeInUp 0.6s ease-out;
-    display: flex;
-    justify-content: center;
-  }
-  .step-wrapper {
-    width: 100%;
-    max-width: 920px;
-  }
-  #step4 .step-wrapper {
-    max-width: 100%;
-    padding: 0 2rem;
-  }
+  // 1. Welcome -> Contract
+  document.getElementById("startBtn")?.addEventListener("click", () => {
+    currentStepIndex = 1;
+    showStep(currentStepIndex);
+  });
 
-  .firm-logo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 2rem;
-  }
-  .firm-logo img,
-  .firm-logo-img {
-    display: block;
-    margin: 0 auto;
-    object-fit: contain;
-    opacity: 0.9;
-    width: 20px;
-    height: 10px;
-    max-width: 20px;
-    max-height: 10px;
-  }
-  .client-name {
-    font-size: var(--small) !important;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0.25rem 0 0 0 !important;
-  }
+  // 2. Contract Logic
+  const acceptCheckbox = document.getElementById("acceptContract");
+  const signBtn = document.getElementById("signContractBtn");
 
-  .welcome-text {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--muted);
-    text-align: center;
-    font-weight: 300;
-    margin-bottom: 1.5rem;
-  }
+  acceptCheckbox?.addEventListener("change", (e) => {
+    if (signBtn) signBtn.disabled = !e.target.checked;
+  });
 
-  .contract-viewer {
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-  }
-  .contract-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: center;
-    width: 100%;
-    max-width: 880px;
-  }
-  .contract-help {
-    font-size: 0.875rem;
-    color: var(--muted);
-    text-align: center;
-    margin-bottom: 0.5rem;
-  }
-  #openDocumentBtn {
-    display: inline-block;
-    padding: 0.5rem 1.25rem;
-    text-align: center;
-  }
-
-  .signature-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-  }
-  .signature-section label {
-    font-size: var(--small);
-    font-weight: 300;
-    color: var(--text-dark-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  #signatureCanvas {
-    border: 1px solid var(--border-dark);
-    border-radius: 2px;
-    background: #fff;
-    cursor: crosshair;
-    width: 100%;
-    height: 150px;
-    display: block;
-  }
-
-  .documents-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .document-upload {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .document-upload label {
-    font-size: var(--small);
-    font-weight: 300;
-    color: var(--text-dark-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .document-upload input[type="file"] {
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-dark);
-    border-radius: 2px;
-    background: var(--bg-dark-card);
-    color: var(--muted);
-    font-size: 0.75rem;
-    font-weight: 300;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  .document-upload input[type="file"]:hover {
-    border-color: var(--accent-light);
-  }
-  .document-upload input[type="file"]::file-selector-button {
-    padding: 0.375rem 1rem;
-    margin-right: 1rem;
-    border: 1px solid var(--border-dark);
-    border-radius: 2px;
-    background: var(--bg-dark-main);
-    color: var(--text-dark-primary);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  .document-upload input[type="file"]::file-selector-button:hover {
-    background: var(--accent-light);
-    color: var(--text-white);
-    border-color: var(--accent-light);
-  }
-  .upload-status {
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-  }
-
-  .questionnaire-container {
-    width: 100%;
-    max-width: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  .questionnaire-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .question-progress {
-    margin-bottom: 1rem;
-  }
-  .progress-info {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-    color: var(--muted);
-    font-size: 0.9rem;
-  }
-  .progress-track {
-    height: 6px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent-light), var(--accent));
-    width: 0;
-    transition: width 250ms ease;
-  }
-
-  .question-actions {
-    margin-bottom: 0.75rem;
-    display: flex;
-    gap: 0.75rem;
-  }
-  .char-counter {
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-align: right;
-  }
-  .question-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-    max-width: 100%;
-    padding: 0 1rem;
-  }
-  .question-field label {
-    font-size: var(--small);
-    font-weight: 300;
-    color: var(--text-dark-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .question-field textarea {
-    min-height: 100px;
-    max-height: 400px;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-dark);
-    border-radius: 2px;
-    background: var(--bg-dark-card);
-    color: var(--text-dark-primary);
-    font-family: inherit;
-    font-size: 0.875rem;
-    font-weight: 300;
-    line-height: 1.6;
-    resize: vertical;
-    transition: all 0.3s;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .question-field textarea:focus {
-    outline: none;
-    border-color: var(--accent-light);
-    background: var(--bg-dark-main);
-  }
-  .question-field textarea::placeholder {
-    color: var(--muted);
-    opacity: 0.5;
-  }
-  .field-error {
-    outline: 2px solid rgba(239, 68, 68, 0.18);
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.04) inset;
-  }
-
-  .success-message {
-    text-align: center;
-    padding: 2rem 0;
-  }
-  .success-icon {
-    font-size: 4rem;
-    font-weight: 200;
-    color: var(--accent-light);
-    margin-bottom: 1.5rem;
-    line-height: 1;
-  }
-  .success-text {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--muted);
-    font-weight: 300;
-    margin: 0;
-  }
-
-  .calendar-section {
-    margin-top: 2rem;
-  }
-  .calendar-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: var(--text-dark-primary);
-    text-align: center;
-    margin: 1rem 0 1.5rem 0;
-    letter-spacing: 0.05em;
-  }
-  .error-text {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--muted);
-    text-align: center;
-    font-weight: 300;
-  }
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    text-align: center;
-  }
-
-  @media (max-width: 640px) {
-    .welcome-container {
-      padding: 1.5rem 1rem;
-    }
-    .step-wrapper {
-      max-width: 100%;
-      padding: 0 0.5rem;
-    }
-    .question-field {
-      max-width: 100% !important;
-      padding: 0 !important;
-    }
-    .question-field textarea {
-      width: 100% !important;
-    }
-    .firm-logo img,
-    .firm-logo-img {
-      width: 16px;
-      height: 8px;
-      max-width: 16px;
-      max-height: 8px;
-    }
-    .contract-viewer iframe {
-      width: 100% !important;
-      height: 300px;
-    }
-    #signatureCanvas {
-      height: 120px;
-    }
-    .form-header h1 {
-      font-size: 1.5rem;
-    }
-  }
-
-  @media (min-width: 640px) {
-    .welcome-container {
-      padding: 3rem 2rem;
-    }
-  }
-  @media (min-width: 768px) {
-    .step-wrapper {
-      padding: 0 1rem;
-    }
-  }
-</style>
-
-<script define:vars={{ token }}>
-  // Compact, modular portal script: unifica canvas, documentos, cuestionario y navegación de pasos.
-  let portalData = null,
-    canvas,
-    ctx,
-    isDrawing = false,
-    currentQuestionIndex = 0,
-    questionsCount = 0;
-
-  const qs = (sel, root = document) => root.querySelector(sel);
-  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const setDisplay = (id, v) => {
-    const el = qs("#" + id);
-    if (el) el.style.display = v;
-  };
-
-  const Portal = {
-    init() {
-      this.loadPortalData();
-    },
-
-    async loadPortalData() {
-      try {
-        const res = await fetch(`/api/portal/validate?token=${token}`);
-        if (!res.ok) return this.showError();
-        portalData = await res.json();
-        this.initializePortal();
-      } catch (e) {
-        this.showError();
-      }
-    },
-
-    initializePortal() {
-      setDisplay("loading", "none");
-
-      // Firm logo
-      if (portalData?.profile?.firm_logo_url) {
-        qs("#firmLogo").innerHTML =
-          `<img src="${portalData.profile.firm_logo_url}" alt="Logo" class="firm-logo-img" width="100" height="100"/>`;
-      }
-
-      // Contract open button
-      const openBtn = qs("#openDocumentBtn");
-      if (openBtn) {
-        if (portalData?.contract_template?.file_url) {
-          openBtn.href = portalData.contract_template.file_url;
-          openBtn.style.display = "inline-block";
-        } else openBtn.style.display = "none";
-      }
-
-      qs("#firmName").textContent =
-        portalData?.profile?.firm_name || "ようこそ";
-      const clientNameEl = qs("#clientName");
-      if (portalData?.client?.client_name) {
-        clientNameEl.textContent = portalData.client.client_name;
-        clientNameEl.style.display = "block";
-      } else clientNameEl.style.display = "none";
-
-      setDisplay("step1", "flex");
-      this.setupSignatureCanvas();
-    },
-
-    setupSignatureCanvas() {
-      canvas = qs("#signatureCanvas");
-      if (!canvas) return;
-
-      // Replace node to remove leftover listeners, then compute size and attach pointer events
-      const rect = canvas.getBoundingClientRect();
-      const newCanvas = canvas.cloneNode(true);
-      canvas.parentNode.replaceChild(newCanvas, canvas);
-      canvas = newCanvas;
-      ctx = canvas.getContext("2d");
-      canvas.width = Math.max(rect.width, 300);
-      canvas.height = 150;
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-
-      canvas.addEventListener("pointerdown", (e) => {
-        isDrawing = true;
-        canvas.setPointerCapture(e.pointerId);
-        const r = canvas.getBoundingClientRect();
-        ctx.beginPath();
-        ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
-      });
-      canvas.addEventListener("pointermove", (e) => {
-        if (!isDrawing) return;
-        const r = canvas.getBoundingClientRect();
-        ctx.lineTo(e.clientX - r.left, e.clientY - r.top);
-        ctx.stroke();
-        qs("#signBtn").disabled = false;
-      });
-      const end = (e) => {
-        isDrawing = false;
-        try {
-          canvas.releasePointerCapture &&
-            canvas.releasePointerCapture(e?.pointerId);
-        } catch (e) {}
-      };
-      canvas.addEventListener("pointerup", end);
-      canvas.addEventListener("pointercancel", end);
-      canvas.addEventListener("pointerout", end);
-    },
-
-    clearSignature() {
-      if (ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        qs("#signBtn").disabled = true;
-      }
-    },
-
-    async signContract() {
-      if (!canvas) return alert("Firma no disponible");
-      const signatureData = canvas.toDataURL();
-      try {
-        const res = await fetch("/api/portal/sign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token,
-            signature_data: signatureData,
-            ip_address: "client-ip",
-          }),
-        });
-        if (res.ok) this.nextStep(3);
-        else alert("Error al firmar el contrato");
-      } catch (e) {
-        alert("Error al firmar el contrato");
-      }
-    },
-
-    nextStep(step) {
-      qsa(".step").forEach((s) => (s.style.display = "none"));
-      setDisplay(`step${step}`, "flex");
-      if (step === 2) setTimeout(() => this.setupSignatureCanvas(), 100);
-      if (step === 3) this.renderDocuments();
-      if (step === 4) this.loadQuestionnaire();
-    },
-
-    renderDocuments() {
-      const container = qs("#documentsContainer");
-      if (!container) return;
-      container.innerHTML = "";
-      const docs = portalData?.client?.required_documents || [];
-      docs.forEach((docType) => {
-        const div = document.createElement("div");
-        div.className = "document-upload";
-        div.innerHTML = `<label>${docType.replace("_", " ").toUpperCase()}</label><input type="file" data-doctype="${docType}" class="doc-input" accept="image/*,application/pdf" /><span class="upload-status"></span>`;
-        container.appendChild(div);
+  signBtn?.addEventListener("click", async () => {
+    try {
+      signBtn.textContent = "FIRMANDO...";
+      const response = await fetch("/api/portal/sign-contract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId }),
       });
 
-      // Delegated handler
-      qsa(".doc-input").forEach((input) =>
-        input.addEventListener("change", async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          const docType = e.target.dataset.doctype;
-          const status = e.target.parentElement.querySelector(".upload-status");
-          status.textContent = "Subiendo...";
-          const fd = new FormData();
-          fd.append("token", token);
-          fd.append("document_type", docType);
-          fd.append("file", file);
-          try {
-            const r = await fetch("/api/portal/upload-document", {
-              method: "POST",
-              body: fd,
-            });
-            if (r.ok) {
-              status.textContent = "✓ Subido";
-              status.style.color = "#22c55e";
-            } else {
-              status.textContent = "✗ Error";
-              status.style.color = "#ef4444";
-            }
-          } catch (err) {
-            status.textContent = "✗ Error";
-            status.style.color = "#ef4444";
-          }
-        })
-      );
-    },
-
-    loadQuestionnaire() {
-      const form = qs("#questionnaireForm");
-      const progressWrap = qs("#questionProgress");
-      if (!form) return;
-      form.innerHTML = "";
-      const questions = (portalData?.questionnaire?.questions || [])
-        .slice()
-        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
-      if (!questions.length) {
-        form.innerHTML =
-          '<p class="error-text">No hay preguntas disponibles.</p>';
-        if (progressWrap) progressWrap.style.display = "none";
-        return;
+      if (response.ok) {
+        currentStepIndex = 2;
+        showStep(currentStepIndex);
+      } else {
+        alert("Error al firmar contrato");
+        signBtn.textContent = "FIRMAR Y CONTINUAR";
       }
+    } catch (e) {
+      alert("Error de conexión");
+      signBtn.textContent = "FIRMAR Y CONTINUAR";
+    }
+  });
 
-      questions.forEach((q, idx) => {
-        const maxLen = q.max_length || 1000;
-        const required = q.required ? "required" : "";
-        const div = document.createElement("div");
-        div.className = "question-field";
-        div.dataset.idx = idx;
-        div.style.display = "none";
-        div.innerHTML = `<label>${idx + 1}. ${q.question_text}${q.required ? " *" : ""}</label><textarea data-qid="${q.id}" data-idx="${idx}" maxlength="${maxLen}" placeholder="Escribe tu respuesta..." ${required}></textarea><div class="char-counter" data-qid="${q.id}">0/${maxLen}</div>`;
-        form.appendChild(div);
+  // 3. Questionnaire Logic
+  const qForm = document.getElementById("questionnaireForm");
+  qForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = qForm.querySelector('button[type="submit"]');
+    if (btn) btn.textContent = "ENVIANDO...";
+
+    const formData = new FormData(qForm);
+    const answers = {};
+    formData.forEach((value, key) => {
+      answers[key] = value;
+    });
+
+    try {
+      const response = await fetch("/api/portal/submit-questionnaire", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, answers }),
       });
 
-      if (progressWrap) progressWrap.style.display = "block";
-
-      qsa("#questionnaireForm textarea").forEach((ta) => {
-        this.autosizeTextarea(ta);
-        this.updateCharCounter(ta);
-        ta.addEventListener("input", () => {
-          this.autosizeTextarea(ta);
-          this.updateCharCounter(ta);
-          this.saveDraft();
-          this.updateProgress();
-        });
-      });
-
-      this.loadDraft();
-      questionsCount = questions.length;
-      currentQuestionIndex = 0;
-      this.showQuestion(0);
-    },
-
-    autosizeTextarea(el) {
-      if (!el) return;
-      el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight, 400) + "px";
-    },
-    updateCharCounter(el) {
-      const qid = el.dataset.qid;
-      const counter = qs(`.char-counter[data-qid="${qid}"]`);
-      const max = el.getAttribute("maxlength") || 1000;
-      if (counter) counter.textContent = `${el.value.length}/${max}`;
-    },
-
-    saveDraft() {
-      try {
-        const answers = {};
-        qsa("#questionnaireForm textarea").forEach(
-          (ta) => (answers[ta.dataset.qid] = ta.value)
-        );
-        localStorage.setItem(
-          `portal_answers_${token}`,
-          JSON.stringify(answers)
-        );
-      } catch (e) {}
-    },
-    loadDraft() {
-      try {
-        const raw = localStorage.getItem(`portal_answers_${token}`);
-        if (!raw) return;
-        const answers = JSON.parse(raw);
-        Object.keys(answers).forEach((qid) => {
-          const ta = qs(`#questionnaireForm textarea[data-qid="${qid}"]`);
-          if (ta) {
-            ta.value = answers[qid] || "";
-            this.autosizeTextarea(ta);
-            this.updateCharCounter(ta);
-          }
-        });
-      } catch (e) {}
-    },
-
-    updateProgress() {
-      const total =
-        questionsCount || qsa("#questionnaireForm .question-field").length;
-      if (!total) return;
-      const idx = currentQuestionIndex || 0;
-      const pct = Math.round(((idx + 1) / total) * 100);
-      const bar = qs("#progressBar");
-      const txt = qs("#progressText");
-      if (bar) bar.style.width = pct + "%";
-      if (txt) txt.textContent = `Pregunta ${idx + 1} de ${total}`;
-    },
-
-    showFieldError(el) {
-      el && el.classList.add("field-error");
-    },
-    clearFieldError(el) {
-      el && el.classList.remove("field-error");
-    },
-
-    showQuestion(idx) {
-      const fields = qsa("#questionnaireForm .question-field");
-      const total = fields.length;
-      if (!total) return;
-      if (idx < 0) idx = 0;
-      if (idx > total - 1) idx = total - 1;
-      currentQuestionIndex = idx;
-      fields.forEach((f) => (f.style.display = "none"));
-      const cur = qs(`#questionnaireForm .question-field[data-idx="${idx}"]`);
-      if (cur) cur.style.display = "block";
-      const prevBtn = qs("#prevQuestionBtn");
-      const nextBtn = qs("#nextQuestionBtn");
-      if (prevBtn) prevBtn.disabled = idx === 0;
-      if (nextBtn)
-        nextBtn.textContent =
-          idx === total - 1 ? "Enviar Respuestas" : "Siguiente";
-      this.updateProgress();
-    },
-
-    nextQuestion() {
-      const total = qsa("#questionnaireForm .question-field").length;
-      if (!total) return;
-      const curTa = qs(
-        `#questionnaireForm .question-field[data-idx="${currentQuestionIndex}"] textarea`
-      );
-      if (curTa) {
-        this.clearFieldError(curTa);
-        if (curTa.hasAttribute("required") && curTa.value.trim() === "") {
-          this.showFieldError(curTa);
-          curTa.scrollIntoView({ behavior: "smooth", block: "center" });
-          return alert("Por favor, responde la pregunta antes de continuar.");
-        }
-      }
-      if (currentQuestionIndex >= total - 1) return this.submitQuestionnaire();
-      currentQuestionIndex += 1;
-      this.showQuestion(currentQuestionIndex);
-    },
-
-    prevQuestion() {
-      if (currentQuestionIndex <= 0) return;
-      currentQuestionIndex -= 1;
-      this.showQuestion(currentQuestionIndex);
-    },
-
-    async submitQuestionnaire() {
-      const submitBtn = qs("#submitAnswersBtn");
-      const textareas = qsa("#questionnaireForm textarea");
-      let firstInvalid = null;
-      textareas.forEach((ta) => this.clearFieldError(ta));
-      for (const ta of textareas) {
-        if (ta.hasAttribute("required") && ta.value.trim() === "") {
-          this.showFieldError(ta);
-          if (!firstInvalid) firstInvalid = ta;
-        }
-      }
-      if (firstInvalid) {
-        firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
-        return alert(
-          "Por favor, responde las preguntas marcadas con * antes de continuar."
-        );
-      }
-      const answers = textareas.map((ta) => ({
-        question_id: ta.dataset.qid,
-        answer_text: ta.value,
-      }));
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Enviando...";
-      }
-      try {
-        const r = await fetch("/api/portal/submit-answers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, answers }),
-        });
-        if (r.ok) {
-          try {
-            localStorage.removeItem(`portal_answers_${token}`);
-          } catch (e) {}
-          await this.completeProcess();
-        } else alert("Error al enviar respuestas");
-      } catch (e) {
+      if (response.ok) {
+        currentStepIndex = 3;
+        showStep(currentStepIndex);
+      } else {
         alert("Error al enviar respuestas");
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Enviar Respuestas";
-        }
+        if (btn) btn.textContent = "ENVIAR RESPUESTAS";
       }
-    },
+    } catch (e) {
+      alert("Error de conexión");
+      if (btn) btn.textContent = "ENVIAR RESPUESTAS";
+    }
+  });
 
-    async completeProcess() {
-      try {
-        await fetch("/api/portal/complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        if (portalData?.profile?.calendar_link) {
-          setDisplay("calendarSection", "block");
-          qs("#calendarLink").href = portalData.profile.calendar_link;
-        }
-        this.nextStep(5);
-      } catch (e) {
-        alert("Error al completar el proceso");
+  // 4. Documents Logic
+  const docsForm = document.getElementById("docsForm");
+  docsForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = docsForm.querySelector('button[type="submit"]');
+    if (btn) btn.textContent = "SUBIENDO...";
+
+    const formData = new FormData(docsForm);
+    formData.append("clientId", clientId);
+
+    try {
+      const response = await fetch("/api/portal/upload-documents", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        currentStepIndex = 4;
+        showStep(currentStepIndex);
+      } else {
+        alert("Error al subir documentos");
+        if (btn) btn.textContent = "SUBIR DOCUMENTOS";
       }
-    },
-
-    showError() {
-      setDisplay("loading", "none");
-      setDisplay("errorScreen", "block");
-    },
-  };
-
-  // Expose required functions for inline onclick attributes
-  window.clearSignature = () => Portal.clearSignature();
-  window.nextStep = (n) => Portal.nextStep(n);
-  window.nextQuestion = () => Portal.nextQuestion();
-  window.prevQuestion = () => Portal.prevQuestion();
-  window.signContract = () => Portal.signContract();
-  window.submitQuestionnaire = () => Portal.submitQuestionnaire();
-
-  // Init
-  Portal.init();
+    } catch (e) {
+      alert("Error de conexión");
+      if (btn) btn.textContent = "SUBIR DOCUMENTOS";
+    }
+  });
 </script>
