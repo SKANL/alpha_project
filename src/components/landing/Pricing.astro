@@ -1,0 +1,261 @@
+---
+import Button from "@/components/ui/Button.astro";
+---
+
+<section id="pricing" class="py-32 bg-surface-base relative overflow-hidden">
+    <!-- Background Glow -->
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand/5 blur-[150px] rounded-full pointer-events-none"
+    >
+    </div>
+
+    <div class="container mx-auto px-6 relative z-10">
+        <div class="text-center mb-20 space-y-4">
+            <h2 class="text-4xl md:text-5xl font-serif text-content-primary">
+                Membresías de Firma
+            </h2>
+            <p class="text-content-secondary font-light text-lg">
+                Infraestructura de élite para despachos que exigen lo mejor.
+            </p>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- PLAN: BOUTIQUE -->
+            <div
+                class="pricing-card group relative bg-surface-card border border-border rounded-sm p-8 flex flex-col hover:-translate-y-2 transition-transform duration-500"
+            >
+                <div class="mb-8">
+                    <h3 class="text-xl font-serif text-content-primary mb-2">
+                        Bufete Boutique
+                    </h3>
+                    <p class="text-sm text-content-muted font-light">
+                        Para firmas especializadas.
+                    </p>
+                </div>
+                <div class="mb-8">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-light text-content-primary"
+                            >$2,999</span
+                        >
+                        <span class="text-sm text-content-muted">MXN/mes</span>
+                    </div>
+                    <p class="text-xs text-content-muted mt-2">+ IVA</p>
+                </div>
+
+                <ul class="space-y-4 mb-8 flex-1">
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> 5 Usuarios (Abogados)
+                    </li>
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> 20 Salas de Bienvenida /
+                        mes
+                    </li>
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> 2 GB Almacenamiento
+                    </li>
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> Logo del Despacho
+                    </li>
+                </ul>
+
+                <Button
+                    href="/auth/signup?plan=boutique"
+                    variant="outline"
+                    class="w-full justify-center"
+                >
+                    SOLICITAR ACCESO
+                </Button>
+            </div>
+
+            <!-- PLAN: FIRMA CONSOLIDADA (BLACK CARD) -->
+            <div
+                class="pricing-card group relative bg-[#0F0F0E] border border-brand/50 rounded-sm p-8 flex flex-col transform scale-105 shadow-2xl shadow-brand/10 z-10"
+            >
+                <!-- Spotlight Effect Layer -->
+                <div
+                    class="absolute inset-0 bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,50%),rgba(200,170,110,0.15),transparent_50%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-sm"
+                >
+                </div>
+
+                <div
+                    class="absolute top-0 right-0 bg-brand text-[#0F0F0E] text-xs font-bold px-3 py-1 rounded-bl-sm tracking-widest uppercase"
+                >
+                    Recomendado
+                </div>
+
+                <div class="mb-8 relative z-10">
+                    <h3 class="text-xl font-serif text-brand mb-2">
+                        Firma Consolidada
+                    </h3>
+                    <p class="text-sm text-content-secondary font-light">
+                        El estándar de oro.
+                    </p>
+                </div>
+                <div class="mb-8 relative z-10">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-4xl font-light text-white"
+                            >$7,999</span
+                        >
+                        <span class="text-sm text-content-secondary"
+                            >MXN/mes</span
+                        >
+                    </div>
+                    <p class="text-xs text-content-muted mt-2">+ IVA</p>
+                </div>
+
+                <ul class="space-y-4 mb-8 flex-1 relative z-10">
+                    <li class="flex items-center gap-3 text-sm text-white">
+                        <span class="text-brand">✓</span> 15 Usuarios (Abogados)
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-white">
+                        <span class="text-brand">✓</span> 100 Salas de Bienvenida
+                        / mes
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-white">
+                        <span class="text-brand">✓</span> 20 GB Almacenamiento
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-white">
+                        <span class="text-brand">✓</span> Marca Blanca Total
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-white">
+                        <span class="text-brand">✓</span> Soporte Prioritario
+                    </li>
+                </ul>
+
+                <Button
+                    href="/auth/signup?plan=firma"
+                    variant="primary"
+                    class="w-full justify-center relative z-10 shadow-[0_0_20px_rgba(200,170,110,0.3)] hover:shadow-[0_0_30px_rgba(200,170,110,0.5)] transition-shadow"
+                >
+                    OBTENER MEMBRESÍA
+                </Button>
+            </div>
+
+            <!-- PLAN: CORPORATIVO -->
+            <div
+                class="pricing-card group relative bg-surface-card border border-border rounded-sm p-8 flex flex-col hover:-translate-y-2 transition-transform duration-500"
+            >
+                <div class="mb-8">
+                    <h3 class="text-xl font-serif text-content-primary mb-2">
+                        Corporativo
+                    </h3>
+                    <p class="text-sm text-content-muted font-light">
+                        Operaciones masivas.
+                    </p>
+                </div>
+                <div class="mb-8">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-light text-content-primary"
+                            >Personalizado</span
+                        >
+                    </div>
+                    <p class="text-xs text-content-muted mt-2">
+                        Contactar Ventas
+                    </p>
+                </div>
+
+                <ul class="space-y-4 mb-8 flex-1">
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> Usuarios Ilimitados
+                    </li>
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> Salas Ilimitadas
+                    </li>
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> Almacenamiento a Medida
+                        (1TB+)
+                    </li>
+                    <li
+                        class="flex items-center gap-3 text-sm text-content-secondary"
+                    >
+                        <span class="text-brand">✓</span> Instancia Dedicada
+                    </li>
+                </ul>
+
+                <Button
+                    href="mailto:ventas@aureuslaw.com"
+                    variant="outline"
+                    class="w-full justify-center"
+                >
+                    CONTACTAR
+                </Button>
+            </div>
+        </div>
+
+        <!-- Add-ons Section -->
+        <div
+            class="max-w-4xl mx-auto mt-24 pt-12 border-t border-border-weak/30"
+        >
+            <h3
+                class="text-center text-xl font-serif text-content-primary mb-8"
+            >
+                Paquetes de Expansión
+            </h3>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div
+                    class="flex items-center justify-between p-6 bg-surface-card border border-border rounded-sm"
+                >
+                    <div>
+                        <h4 class="text-content-primary font-medium">
+                            +10 Salas de Bienvenida
+                        </h4>
+                        <p class="text-sm text-content-muted">
+                            Capacidad adicional mensual
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-brand font-light">$500 MXN</div>
+                        <div class="text-xs text-content-muted">/mes</div>
+                    </div>
+                </div>
+                <div
+                    class="flex items-center justify-between p-6 bg-surface-card border border-border rounded-sm"
+                >
+                    <div>
+                        <h4 class="text-content-primary font-medium">
+                            +50 GB Almacenamiento
+                        </h4>
+                        <p class="text-sm text-content-muted">
+                            Espacio seguro adicional
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-brand font-light">$900 MXN</div>
+                        <div class="text-xs text-content-muted">/mes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Mouse Tracking for Spotlight Effect
+    const cards = document.querySelectorAll(".pricing-card");
+
+    cards.forEach((card) => {
+        card.addEventListener("mousemove", (e) => {
+            const mouseEvent = e as MouseEvent;
+            const htmlCard = card as HTMLElement;
+            const rect = htmlCard.getBoundingClientRect();
+            const x = mouseEvent.clientX - rect.left;
+            const y = mouseEvent.clientY - rect.top;
+            htmlCard.style.setProperty("--mouse-x", `${x}px`);
+            htmlCard.style.setProperty("--mouse-y", `${y}px`);
+        });
+    });
+</script>

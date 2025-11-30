@@ -1,48 +1,22 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import Button from "@/components/ui/Button.astro";
+import Hero from "@/components/landing/Hero.astro";
+import Trust from "@/components/landing/Trust.astro";
+import Features from "@/components/landing/Features.astro";
+import Security from "@/components/landing/Security.astro";
+import Pricing from "@/components/landing/Pricing.astro";
+import FAQ from "@/components/landing/FAQ.astro";
+import Footer from "@/components/landing/Footer.astro";
 ---
 
-<Layout title="Bienvenido">
-	<main
-		class="min-h-screen flex flex-col items-center justify-center p-8 text-center animate-fade-in-up"
-	>
-		<div class="mb-8">
-			<div
-				class="w-16 h-16 bg-gradient-to-br from-brand to-brand-hover rounded-lg mx-auto mb-6 shadow-lg shadow-brand/20"
-			>
-			</div>
-			<h1
-				class="text-4xl font-light tracking-zen text-content-primary mb-2"
-			>
-				Aureus Law
-			</h1>
-			<p
-				class="text-sm font-light tracking-widest uppercase text-content-secondary"
-			>
-				Portal de Bienvenida
-			</p>
-		</div>
-
-		<div class="max-w-md mx-auto mb-12">
-			<p
-				class="text-lg font-light text-content-secondary leading-relaxed"
-			>
-				Una experiencia segura y guiada para iniciar su caso legal con
-				nosotros.
-			</p>
-		</div>
-
-		<div class="flex gap-4">
-			<Button href="/auth/signin" variant="primary">
-				INGRESAR AL PANEL
-			</Button>
-		</div>
-
-		<footer class="fixed bottom-8 w-full text-center">
-			<p class="text-xs font-light text-content-muted">
-				© {new Date().getFullYear()} Aureus Law. Todos los derechos reservados.
-			</p>
-		</footer>
+<Layout title="Aureus Law | Infraestructura Legal de Élite">
+	<main class="bg-surface-base min-h-screen">
+		<Hero />
+		<Trust />
+		<Features />
+		<Security />
+		<Pricing />
+		<FAQ />
+		<Footer />
 	</main>
 </Layout>

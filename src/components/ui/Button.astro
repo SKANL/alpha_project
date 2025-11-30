@@ -1,6 +1,6 @@
 ---
 interface Props extends astroHTML.JSX.ButtonHTMLAttributes {
-    variant?: "primary" | "secondary" | "ghost" | "danger";
+    variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
     size?: "sm" | "md" | "lg";
     block?: boolean;
     href?: string; // If provided, renders as <a>
@@ -25,6 +25,8 @@ const variants = {
         "bg-brand text-surface-base hover:bg-brand-hover shadow-sm hover:shadow-md",
     secondary:
         "bg-surface-card border border-border text-content-primary hover:bg-surface-highlight hover:border-border-strong",
+    outline:
+        "bg-transparent border border-border text-content-primary hover:bg-surface-highlight hover:border-border-strong",
     ghost: "bg-transparent text-content-secondary hover:text-content-primary hover:bg-surface-highlight",
     danger: "bg-transparent text-status-error border border-status-error/30 hover:bg-status-error/10",
 };
