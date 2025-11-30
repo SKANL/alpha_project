@@ -1,56 +1,36 @@
 ---
-import Layout from "@/layouts/Dashboard.astro";
-import Navigation from "@/components/Navigation.astro";
-import { supabase } from "@/lib/supabase";
+import Layout from "../../../layouts/Dashboard.astro";
+import Navigation from "../../../components/Navigation.astro";
+import { ClientService } from "../../../services/ClientService";
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+// Middleware already validates session and injects user into locals
+const { user } = Astro.locals;
 
-if (!accessToken || !refreshToken) {
+// If for some reason middleware didn't catch it (shouldn't happen with correct config)
+if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-const session = await supabase.auth.setSession({
-  refresh_token: refreshToken.value,
-  access_token: accessToken.value,
-});
-
-if (session.error || !session.data.user) {
-  return Astro.redirect("/auth/signin");
-}
-
-const user = session.data.user;
-
-// Get clients using API
-const clientsResponse = await fetch(`${Astro.url.origin}/api/clients/list`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
-
-let clients = [];
-if (clientsResponse.ok) {
-  clients = await clientsResponse.json();
-}
+const clients = await ClientService.getClients(user.id);
 ---
 
 <Layout title="Clientes">
   <Navigation currentPage="clients" />
-  
+
   <main class="dashboard-main">
     <header class="page-header">
       <h1 class="page-title">Clientes</h1>
       <p class="page-subtitle">Gestión de expedientes y salas de bienvenida</p>
     </header>
 
-      <div class="action-bar">
-        <a href="/dashboard/clients/new" class="primary-action">
-          Nueva Sala de Bienvenida
-        </a>
-      </div>
+    <div class="action-bar">
+      <a href="/dashboard/clients/new" class="primary-action">
+        Nueva Sala de Bienvenida
+      </a>
+    </div>
 
-      {clients && clients.length > 0 ? (
+    {
+      clients && clients.length > 0 ? (
         <table class="data-table">
           <thead>
             <tr>
@@ -58,26 +38,29 @@ if (clientsResponse.ok) {
               <th>Caso</th>
               <th>Estado</th>
               <th>Fecha</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            {clients.map((client: any) => (
+            {clients.map((client) => (
               <tr>
                 <td class="table-primary">{client.client_name}</td>
                 <td>{client.case_name}</td>
                 <td>
                   <span class={`status-badge ${client.status}`}>
-                    {client.status === 'pending' ? 'Pendiente' : 'Completado'}
+                    {client.status === "pending" ? "Pendiente" : "Completado"}
                   </span>
                 </td>
-                <td class="table-date">{new Date(client.created_at).toLocaleDateString('es-MX')}</td>
+                <td class="table-date">
+                  {new Date(client.created_at).toLocaleDateString("es-MX")}
+                </td>
                 <td>
                   <div class="table-actions">
-                    {client.status === 'pending' ? (
+                    {client.status === "pending" ? (
                       <button
                         class="action-link copy-link-btn"
                         data-token={client.magic_link_token}
+                        type="button"
                       >
                         Copiar Link
                       </button>
@@ -93,6 +76,7 @@ if (clientsResponse.ok) {
                       class="action-link delete delete-client-btn"
                       data-id={client.id}
                       data-name={client.client_name}
+                      type="button"
                     >
                       Eliminar
                     </button>
@@ -105,15 +89,18 @@ if (clientsResponse.ok) {
       ) : (
         <div class="empty-state">
           <h3 class="empty-title">No hay clientes aún</h3>
-          <p class="empty-text">Crea tu primera sala de bienvenida para comenzar</p>
+          <p class="empty-text">
+            Crea tu primera sala de bienvenida para comenzar
+          </p>
           <a href="/dashboard/clients/new" class="empty-action">
             Nueva Sala de Bienvenida
           </a>
         </div>
-      )}
+      )
+    }
 
-      <div id="notification" class="notification"></div>
-    </main>
+    <div id="notification" class="notification"></div>
+  </main>
 </Layout>
 
 <style>
@@ -192,53 +179,79 @@ if (clientsResponse.ok) {
 </style>
 
 <script>
-  const notification = document.getElementById('notification');
+  // Script optimizado para View Transitions y Event Delegation
+  function initPage() {
+    const notification = document.getElementById("notification");
+    const mainContainer = document.querySelector(".dashboard-main");
 
-  function showNotification(message: string) {
-    if (!notification) return;
-    notification.textContent = message;
-    notification.className = 'notification show';
-    setTimeout(() => {
-      notification.classList.remove('show');
-    }, 3000);
+    function showNotification(message: string) {
+      if (!notification) return;
+      notification.textContent = message;
+      notification.className = "notification show";
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 3000);
+    }
+
+    if (!mainContainer) return;
+
+    // Usar un solo listener en el contenedor principal (Event Delegation)
+    mainContainer.addEventListener("click", async (e) => {
+      const target = e.target as HTMLElement;
+
+      // Copy Link
+      if (target.matches(".copy-link-btn")) {
+        const token = target.dataset.token;
+        if (!token) return;
+        const link = `${window.location.origin}/portal/${token}`;
+        try {
+          await navigator.clipboard.writeText(link);
+          showNotification("Link copiado al portapapeles");
+        } catch (err) {
+          console.error("Error copying link:", err);
+          showNotification("Error al copiar link");
+        }
+      }
+
+      // Delete Client
+      if (target.matches(".delete-client-btn")) {
+        const id = target.dataset.id;
+        const name = target.dataset.name;
+
+        if (
+          !id ||
+          !confirm(
+            `¿Estás seguro de eliminar el expediente de ${name}? Esta acción no se puede deshacer.`,
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/clients/delete", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+
+          if (response.ok) {
+            showNotification("Cliente eliminado correctamente");
+            // Recargar suavemente para actualizar la lista
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            showNotification("Error al eliminar cliente");
+          }
+        } catch (error) {
+          console.error("Error deleting client:", error);
+          showNotification("Error al eliminar cliente");
+        }
+      }
+    });
   }
 
-  // Copy link functionality
-  document.querySelectorAll('.copy-link-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const token = (btn as HTMLElement).dataset.token;
-      const link = `${window.location.origin}/portal/${token}`;
-      navigator.clipboard.writeText(link);
-      showNotification('Link copiado al portapapeles');
-    });
-  });
+  // Inicializar en carga inicial
+  initPage();
 
-  // Delete client functionality
-  document.querySelectorAll('.delete-client-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = (btn as HTMLElement).dataset.id;
-      const name = (btn as HTMLElement).dataset.name;
-
-      if (!confirm(`¿Estás seguro de eliminar el expediente de ${name}? Esta acción no se puede deshacer.`)) {
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/clients/delete', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
-        });
-
-        if (response.ok) {
-          showNotification('Cliente eliminado correctamente');
-          setTimeout(() => window.location.reload(), 1500);
-        } else {
-          showNotification('Error al eliminar cliente');
-        }
-      } catch (error) {
-        showNotification('Error al eliminar cliente');
-      }
-    });
-  });
+  // Re-inicializar en navegación de View Transitions
+  document.addEventListener("astro:page-load", initPage);
 </script>

@@ -1,43 +1,29 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { ClientService } from "../../../services/ClientService";
 
-export const GET: APIRoute = async ({ cookies }) => {
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+export const GET: APIRoute = async ({ locals }) => {
+  const user = locals.user;
 
-  if (!accessToken || !refreshToken) {
+  if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
+      headers: { "Content-Type": "application/json" },
     });
   }
 
-  const { data: { user }, error: authError } = await supabase.auth.setSession({
-    access_token: accessToken.value,
-    refresh_token: refreshToken.value,
-  });
+  try {
+    const clients = await ClientService.getClients(user.id);
 
-  if (authError || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
+    return new Response(JSON.stringify(clients), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
-  }
-
-  const { data: clients, error } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
+      headers: { "Content-Type": "application/json" },
     });
   }
-
-  return new Response(JSON.stringify(clients), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 };

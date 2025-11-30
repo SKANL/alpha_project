@@ -1,4 +1,4 @@
-// Types for Database Tables
+// Types for Database Tables matching supabase-schema.sql
 
 export interface Profile {
   id: string;
@@ -73,9 +73,9 @@ export interface ClientAnswer {
   created_at: string;
 }
 
-// Form Types
+// Form Types & DTOs
 
-export interface CreateClientForm {
+export interface CreateClientDTO {
   client_name: string;
   case_name: string;
   contract_template_id: string;
@@ -83,45 +83,8 @@ export interface CreateClientForm {
   required_documents: DocumentType[];
 }
 
-export interface UpdateProfileForm {
+export interface UpdateProfileDTO {
   firm_name?: string;
-  firm_logo?: File;
+  firm_logo_url?: string;
   calendar_link?: string;
-}
-
-export interface CreateContractTemplateForm {
-  name: string;
-  file: File;
-}
-
-export interface CreateQuestionnaireForm {
-  name: string;
-  questions: string[];
-}
-
-// Client Portal Types
-
-export interface ClientPortalData {
-  client: Client;
-  contract_template: ContractTemplate;
-  questionnaire: QuestionnaireTemplate;
-  questions: Question[];
-  profile: Profile;
-}
-
-export interface SignContractData {
-  signature_data: string;
-  ip_address: string;
-}
-
-export interface UploadDocumentData {
-  document_type: DocumentType;
-  file: File;
-}
-
-export interface SubmitAnswersData {
-  answers: {
-    question_id: string;
-    answer_text: string;
-  }[];
 }

@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 interface Props {
   currentPage?: string;
 }
@@ -36,15 +37,23 @@ if (accessToken && refreshToken) {
 
 <nav class="sidebar">
   <div class="sidebar-header">
-    {profile?.firm_logo_url ? (
-      <div class="logo-preview">
-        <img src={profile.firm_logo_url} alt={profile.firm_name || 'Logo'} />
-      </div>
-    ) : (
-      <div class="logo-mark"></div>
-    )}
+    {
+      profile?.firm_logo_url ? (
+        <div class="logo-preview">
+          <Image
+            src={profile.firm_logo_url}
+            alt={profile.firm_name || "Logo"}
+            width={32}
+            height={32}
+            class="logo-img"
+          />
+        </div>
+      ) : (
+        <div class="logo-mark" />
+      )
+    }
 
-    <h1 class="logo-text">{profile?.firm_name || 'LEGAL STUDIO'}</h1>
+    <h1 class="logo-text">{profile?.firm_name || "LEGAL STUDIO"}</h1>
   </div>
 
   <div class="nav-section">
@@ -159,7 +168,7 @@ if (accessToken && refreshToken) {
   }
 
   .nav-item::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 50%;

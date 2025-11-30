@@ -1,3 +1,7 @@
+---
+import { ClientRouter } from "astro:transitions";
+---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -6,6 +10,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>Lawyer</title>
+    <ClientRouter />
   </head>
   <body>
     <div class="dashboard-container">
@@ -15,9 +20,9 @@
 </html>
 
 <style is:global>
-
   /* ===== RESET DE ESTILOS ===== */
-  html, body {
+  html,
+  body {
     margin: 0;
     padding: 0;
     border: 0;
@@ -62,7 +67,7 @@
   }
 
   /* ===== ESTILOS COMPARTIDOS DEL DASHBOARD ===== */
-  
+
   /* Layout Principal del Dashboard */
   .dashboard-container {
     display: flex;
