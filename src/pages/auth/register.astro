@@ -1,16 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 
-const { cookies, redirect } = Astro;
+const { user } = Astro.locals;
 
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
-
-if (accessToken && refreshToken) {
-  return redirect("/dashboard");
+if (user) {
+  return Astro.redirect("/dashboard");
 }
-
-export const prerender = true;
 ---
 
 <Layout title="Register">
@@ -67,7 +62,7 @@ export const prerender = true;
 
       <!-- Footer -->
       <div class="form-footer">
-  <p>Already have an account? <a href="/auth/signin">sign in</a></p>
+        <p>Already have an account? <a href="/auth/signin">sign in</a></p>
       </div>
     </div>
   </div>

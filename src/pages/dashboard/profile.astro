@@ -1,38 +1,15 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
-import { supabase } from "@/lib/supabase";
+import { ProfileService } from "@/services/ProfileService";
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const { user } = Astro.locals;
 
-if (!accessToken || !refreshToken) {
+if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-const session = await supabase.auth.setSession({
-  refresh_token: refreshToken.value,
-  access_token: accessToken.value,
-});
-
-if (session.error || !session.data.user) {
-  return Astro.redirect("/auth/signin");
-}
-
-const user = session.data.user;
-
-// Get profile using API
-const profileResponse = await fetch(`${Astro.url.origin}/api/profile/get`, {
-  method: "GET",
-  headers: {
-    Cookie: `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`,
-  },
-});
-
-let profile = null;
-if (profileResponse.ok) {
-  profile = await profileResponse.json();
-}
+const profile = await ProfileService.getProfile(user.id);
 ---
 
 <Layout title="Despacho">
@@ -171,10 +148,10 @@ if (profileResponse.ok) {
 
         // Update input values if returned
         const nameInput = document.getElementById(
-          "firm_name"
+          "firm_name",
         ) as HTMLInputElement | null;
         const calendarInput = document.getElementById(
-          "calendar_link"
+          "calendar_link",
         ) as HTMLInputElement | null;
         if (body?.firm_name && nameInput) nameInput.value = body.firm_name;
         if (body?.calendar_link && calendarInput)
@@ -183,12 +160,12 @@ if (profileResponse.ok) {
         // Update logo preview if provided
         if (body?.firm_logo_url) {
           const logoPreview = document.querySelector(
-            ".logo-preview"
+            ".logo-preview",
           ) as HTMLElement | null;
           if (logoPreview) {
             // replace or create img inside preview
             let img = logoPreview.querySelector(
-              "img"
+              "img",
             ) as HTMLImageElement | null;
             if (!img) {
               img = document.createElement("img");

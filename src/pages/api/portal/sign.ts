@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
-import type { SignContractData, Client } from "../../../lib/types";
-import crypto from "crypto";
+import { PortalService } from "../../../services/PortalService";
+import type { SignContractData } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request }) => {
   const { token, signature_data, ip_address }: SignContractData & { token: string } = await request.json();
@@ -13,49 +12,17 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  // Get client
-  const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("magic_link_token", token)
-    .single();
-
-  if (clientError || !client) {
-    return new Response(JSON.stringify({ error: "Invalid token" }), {
-      status: 404,
+  try {
+    const updatedClient = await PortalService.signContract(token, signature_data, ip_address);
+    return new Response(JSON.stringify(updatedClient), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
-  }
-
-  // Generate hash of signature for evidence
-  const timestamp = new Date().toISOString();
-  const hash = crypto
-    .createHash("sha256")
-    .update(`${signature_data}${timestamp}${ip_address}`)
-    .digest("hex");
-
-  // Update client with signature data
-  const { data: updatedClient, error: updateError } = await supabase
-    .from("clients")
-    .update({
-      signature_data,
-      signature_timestamp: timestamp,
-      signature_ip: ip_address,
-      signature_hash: hash,
-    })
-    .eq("id", client.id)
-    .select()
-    .single();
-
-  if (updateError) {
-    return new Response(JSON.stringify({ error: updateError.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
   }
-
-  return new Response(JSON.stringify(updatedClient), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 };

@@ -88,3 +88,15 @@ export interface UpdateProfileDTO {
   firm_logo_url?: string;
   calendar_link?: string;
 }
+
+export interface SignContractData {
+  signature_data: string;
+  ip_address: string;
+}
+
+export interface SubmitAnswersData {
+  answers: {
+    question_id: string;
+    answer_text: string;
+  }[];
+}

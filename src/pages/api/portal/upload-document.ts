@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
+import { PortalService } from "../../../services/PortalService";
 import type { DocumentType } from "../../../lib/types";
 
 export const POST: APIRoute = async ({ request }) => {
@@ -15,59 +15,17 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 
-  // Get client
-  const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("magic_link_token", token)
-    .single();
-
-  if (clientError || !client) {
-    return new Response(JSON.stringify({ error: "Invalid token" }), {
-      status: 404,
+  try {
+    const document = await PortalService.uploadDocument(token, document_type, file);
+    return new Response(JSON.stringify(document), {
+      status: 201,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
-  }
-
-  // Upload file
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${client.id}-${document_type}-${Date.now()}.${fileExt}`;
-  const filePath = `client-files/${fileName}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("firm-assets")
-    .upload(filePath, file);
-
-  if (uploadError) {
-    return new Response(JSON.stringify({ error: uploadError.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
   }
-
-  const { data: urlData } = supabase.storage
-    .from("firm-assets")
-    .getPublicUrl(filePath);
-
-  // Create document record
-  const { data: document, error: docError } = await supabase
-    .from("client_documents")
-    .insert({
-      client_id: client.id,
-      document_type,
-      file_url: urlData.publicUrl,
-    })
-    .select()
-    .single();
-
-  if (docError) {
-    return new Response(JSON.stringify({ error: docError.message }), {
-      status: 500,
-    });
-  }
-
-  return new Response(JSON.stringify(document), {
-    status: 201,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 };

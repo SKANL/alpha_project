@@ -1,7 +1,7 @@
 // With `output: 'static'` configured:
 // export const prerender = false;
 import type { APIRoute } from "astro";
-import { supabase } from "@/lib/supabase";
+import { AuthService } from "../../../services/AuthService";
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData();
@@ -12,13 +12,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return new Response("Email and password are required", { status: 400 });
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const { data, error } = await AuthService.signIn(email, password);
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
+  if (error || !data.session) {
+    return new Response(JSON.stringify({ error: error?.message || "No session created" }), {
       status: 500,
       headers: { "Content-Type": "application/json" }
     });

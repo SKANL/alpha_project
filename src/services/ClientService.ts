@@ -80,4 +80,50 @@ export class ClientService {
             throw new Error(error.message);
         }
     }
+
+    /**
+     * Get full client expediente (details, documents, answers).
+     */
+    static async getClientExpediente(clientId: string, userId: string) {
+        // Get client
+        const { data: client, error: clientError } = await supabase
+            .from("clients")
+            .select("*")
+            .eq("id", clientId)
+            .eq("user_id", userId)
+            .single();
+
+        if (clientError) throw new Error(clientError.message);
+
+        // Get documents
+        const { data: documents } = await supabase
+            .from("client_documents")
+            .select("*")
+            .eq("client_id", clientId);
+
+        // Get answers with questions
+        const { data: answers } = await supabase
+            .from("client_answers")
+            .select(`
+        *,
+        questions (
+          question_text,
+          order_index
+        )
+      `)
+            .eq("client_id", clientId);
+
+        // Sort answers by question order
+        const sortedAnswers = answers?.sort((a: any, b: any) => {
+            const orderA = a.questions?.order_index || 0;
+            const orderB = b.questions?.order_index || 0;
+            return orderA - orderB;
+        }) || [];
+
+        return {
+            client,
+            documents: documents || [],
+            answers: sortedAnswers,
+        };
+    }
 }

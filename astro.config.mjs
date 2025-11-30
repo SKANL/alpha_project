@@ -1,6 +1,7 @@
 // @ts-check
 // @ts-check
 import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
 
 import tailwindcss from '@tailwindcss/vite';
 
@@ -9,6 +10,9 @@ import tailwind from '@astrojs/tailwind';
 // https://astro.build/config
 export default defineConfig({
   output: 'server', // Habilita SSR para todo el proyecto
+  adapter: node({
+    mode: 'standalone',
+  }),
 
   image: {
     domains: ['supabase.co', 'localhost'], // Add your actual Supabase project domain here

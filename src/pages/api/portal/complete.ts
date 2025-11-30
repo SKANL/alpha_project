@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../lib/supabase";
-import type { Client, ClientStatus } from "../../../lib/types";
+import { PortalService } from "../../../services/PortalService";
 
 export const POST: APIRoute = async ({ request }) => {
   const { token } = await request.json();
@@ -11,28 +10,17 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  // Update client status and mark link as used
-  const { data: client, error } = await supabase
-    .from("clients")
-    .update({
-      status: "completed",
-      link_used: true,
-      completed_at: new Date().toISOString(),
-    })
-    .eq("magic_link_token", token)
-    .select()
-    .single();
-
-  if (error) {
+  try {
+    const client = await PortalService.completeProcess(token);
+    return new Response(JSON.stringify(client), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
     });
   }
-
-  return new Response(JSON.stringify(client), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 };

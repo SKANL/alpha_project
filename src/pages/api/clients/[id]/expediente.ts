@@ -1,24 +1,13 @@
 import type { APIRoute } from "astro";
-import { supabase } from "../../../../lib/supabase";
+import { ClientService } from "../../../../services/ClientService";
 
-export const GET: APIRoute = async ({ params, cookies }) => {
-  const accessToken = cookies.get("sb-access-token");
-  const refreshToken = cookies.get("sb-refresh-token");
+export const GET: APIRoute = async ({ params, locals }) => {
+  const user = locals.user;
 
-  if (!accessToken || !refreshToken) {
+  if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-    });
-  }
-
-  const { data: { user }, error: authError } = await supabase.auth.setSession({
-    access_token: accessToken.value,
-    refresh_token: refreshToken.value,
-  });
-
-  if (authError || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -27,52 +16,20 @@ export const GET: APIRoute = async ({ params, cookies }) => {
   if (!clientId) {
     return new Response(JSON.stringify({ error: "Client ID is required" }), {
       status: 400,
+      headers: { "Content-Type": "application/json" },
     });
   }
 
-  // Get client
-  const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("id", clientId)
-    .eq("user_id", user.id)
-    .single();
-
-  if (clientError) {
-    return new Response(JSON.stringify({ error: clientError.message }), {
+  try {
+    const expediente = await ClientService.getClientExpediente(clientId, user.id);
+    return new Response(JSON.stringify(expediente), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
+      headers: { "Content-Type": "application/json" },
     });
   }
-
-  // Get documents
-  const { data: documents, error: docsError } = await supabase
-    .from("client_documents")
-    .select("*")
-    .eq("client_id", clientId);
-
-  // Get answers with questions
-  const { data: answers, error: answersError } = await supabase
-    .from("client_answers")
-    .select(`
-      *,
-      questions (
-        question_text,
-        order_index
-      )
-    `)
-    .eq("client_id", clientId)
-    .order("questions(order_index)");
-
-  const expediente = {
-    client,
-    documents: documents || [],
-    answers: answers || [],
-  };
-
-  return new Response(JSON.stringify(expediente), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 };

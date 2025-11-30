@@ -1,52 +1,34 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
-import { supabase } from "@/lib/supabase";
+import { TemplateService } from "@/services/TemplateService";
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+const { user } = Astro.locals;
 
-if (!accessToken || !refreshToken) {
+if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-const session = await supabase.auth.setSession({
-  refresh_token: refreshToken.value,
-  access_token: accessToken.value,
-});
-
-if (!session.data.user) return Astro.redirect("/auth/signin");
-
-// Get questionnaire templates using API
-const questionnairesResponse = await fetch(`${Astro.url.origin}/api/templates/questionnaires/list`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
-
-let questionnaires = [];
-if (questionnairesResponse.ok) {
-  questionnaires = await questionnairesResponse.json();
-}
+const questionnaires = await TemplateService.getQuestionnaireTemplates(user.id);
 ---
 
 <Layout title="Plantillas de Cuestionarios">
   <Navigation currentPage="questionnaires" />
-  
+
   <main class="dashboard-main">
     <div class="page-header">
       <h1 class="page-title">Plantillas de Cuestionarios</h1>
       <p class="page-subtitle">Gestiona tus cuestionarios de hechos</p>
     </div>
 
-      <div class="action-bar">
-        <button id="openModalBtn" class="primary-action">
-          Nuevo Cuestionario
-        </button>
-      </div>
+    <div class="action-bar">
+      <button id="openModalBtn" class="primary-action">
+        Nuevo Cuestionario
+      </button>
+    </div>
 
-      {(!questionnaires || questionnaires.length === 0) ? (
+    {
+      !questionnaires || questionnaires.length === 0 ? (
         <div class="empty-state">
           <h3 class="empty-title">No hay cuestionarios aún</h3>
           <p class="empty-text">Crea tu primer cuestionario</p>
@@ -58,13 +40,12 @@ if (questionnairesResponse.ok) {
               <div class="questionnaire-content">
                 <h3 class="questionnaire-name">{q.name}</h3>
                 <p class="questionnaire-count">
-                  {q.questions.length} {q.questions.length === 1 ? 'pregunta' : 'preguntas'}
+                  {q.questions.length}{" "}
+                  {q.questions.length === 1 ? "pregunta" : "preguntas"}
                 </p>
                 <ul class="questions-preview">
                   {q.questions.slice(0, 3).map((question: any) => (
-                    <li class="question-item">
-                      {question.question_text}
-                    </li>
+                    <li class="question-item">{question.question_text}</li>
                   ))}
                   {q.questions.length > 3 && (
                     <li class="question-more">
@@ -74,38 +55,55 @@ if (questionnairesResponse.ok) {
                 </ul>
               </div>
               <div class="questionnaire-actions">
-                <button class="action-link delete delete-btn" data-id={q.id}>Eliminar</button>
+                <button class="action-link delete delete-btn" data-id={q.id}>
+                  Eliminar
+                </button>
               </div>
             </div>
           ))}
         </div>
-      )}
+      )
+    }
 
-      <div id="modal" class="modal">
-        <div class="modal-content">
-          <h2 class="modal-title">Nuevo Cuestionario</h2>
-          <form id="questionnaireForm" class="modal-form">
-            <div class="form-row">
-              <label for="name" class="form-label">Nombre del Cuestionario</label>
-              <input type="text" id="name" name="name" class="form-input" placeholder="Cuestionario General" required />
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <h2 class="modal-title">Nuevo Cuestionario</h2>
+        <form id="questionnaireForm" class="modal-form">
+          <div class="form-row">
+            <label for="name" class="form-label">Nombre del Cuestionario</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              class="form-input"
+              placeholder="Cuestionario General"
+              required
+            />
+          </div>
+          <div class="form-row">
+            <label class="form-label">Preguntas</label>
+            <div id="questionsContainer" class="questions-container">
+              <input
+                type="text"
+                class="question-input"
+                placeholder="Pregunta 1"
+                required
+              />
             </div>
-            <div class="form-row">
-              <label class="form-label">Preguntas</label>
-              <div id="questionsContainer" class="questions-container">
-                <input type="text" class="question-input" placeholder="Pregunta 1" required />
-              </div>
-              <button type="button" class="add-question-btn" id="addQuestionBtn">
-                Agregar Pregunta
-              </button>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="modal-btn secondary" id="closeModalBtn">Cancelar</button>
-              <button type="submit" class="modal-btn primary">Guardar</button>
-            </div>
-          </form>
-        </div>
+            <button type="button" class="add-question-btn" id="addQuestionBtn">
+              Agregar Pregunta
+            </button>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="modal-btn secondary" id="closeModalBtn"
+              >Cancelar</button
+            >
+            <button type="submit" class="modal-btn primary">Guardar</button>
+          </div>
+        </form>
       </div>
-    </main>
+    </div>
+  </main>
 </Layout>
 
 <style>
@@ -133,7 +131,7 @@ if (questionnairesResponse.ok) {
   }
 
   .question-item::before {
-    content: '—';
+    content: "—";
     position: absolute;
     left: 0;
     color: rgba(255, 255, 255, 0.2);
@@ -198,52 +196,72 @@ if (questionnairesResponse.ok) {
 </style>
 
 <script>
-  const modal = document.getElementById('modal');
-  const form = document.getElementById('questionnaireForm') as HTMLFormElement;
-  const container = document.getElementById('questionsContainer');
-  
-  document.getElementById('openModalBtn')?.addEventListener('click', () => {
-    modal?.classList.add('active');
-  });
+  function initQuestionnaires() {
+    const modal = document.getElementById("modal");
+    const form = document.getElementById(
+      "questionnaireForm",
+    ) as HTMLFormElement;
+    const container = document.getElementById("questionsContainer");
 
-  document.getElementById('closeModalBtn')?.addEventListener('click', () => {
-    modal?.classList.remove('active');
-  });
-
-  document.getElementById('addQuestionBtn')?.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'question-input';
-    input.placeholder = `Pregunta ${container!.children.length + 1}`;
-    input.required = true;
-    container?.appendChild(input);
-  });
-
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = (document.getElementById('name') as HTMLInputElement).value;
-    const questions = Array.from(document.querySelectorAll('.question-input'))
-      .map((input: any) => input.value)
-      .filter(q => q.trim());
-    
-    const response = await fetch('/api/templates/questionnaires/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, questions }),
+    document.getElementById("openModalBtn")?.addEventListener("click", () => {
+      modal?.classList.add("active");
     });
-    if (response.ok) window.location.reload();
-  });
 
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('¿Eliminar cuestionario?')) return;
-      const id = (btn as HTMLElement).dataset.id;
-      const response = await fetch('/api/templates/questionnaires/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+    document.getElementById("closeModalBtn")?.addEventListener("click", () => {
+      modal?.classList.remove("active");
+    });
+
+    document.getElementById("addQuestionBtn")?.addEventListener("click", () => {
+      if (!container) return;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "question-input";
+      input.placeholder = `Pregunta ${container.children.length + 1}`;
+      input.required = true;
+      container.appendChild(input);
+    });
+
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById("name") as HTMLInputElement;
+      const name = nameInput?.value;
+      const questions = Array.from(document.querySelectorAll(".question-input"))
+        .map((input: any) => input.value)
+        .filter((q) => q.trim());
+
+      try {
+        const response = await fetch("/api/templates/questionnaires/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, questions }),
+        });
+        if (response.ok) window.location.reload();
+        else alert("Error al crear cuestionario");
+      } catch (error) {
+        console.error(error);
+        alert("Error al crear cuestionario");
+      }
+    });
+
+    document.querySelectorAll(".delete-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("¿Eliminar cuestionario?")) return;
+        const id = (btn as HTMLElement).dataset.id;
+        try {
+          const response = await fetch("/api/templates/questionnaires/delete", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+          if (response.ok) window.location.reload();
+        } catch (error) {
+          console.error(error);
+          alert("Error al eliminar cuestionario");
+        }
       });
-      if (response.ok) window.location.reload();
     });
-  });
+  }
+
+  initQuestionnaires();
+  document.addEventListener("astro:page-load", initQuestionnaires);
 </script>

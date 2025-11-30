@@ -1,95 +1,28 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
-import { supabase } from "@/lib/supabase";
+import { ProfileService } from "@/services/ProfileService";
+import { ClientService } from "@/services/ClientService";
+import { TemplateService } from "@/services/TemplateService";
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
-
-if (!accessToken || !refreshToken) {
-  return Astro.redirect("/auth/signin");
-}
-
-let session;
-try {
-  session = await supabase.auth.setSession({
-    refresh_token: refreshToken.value,
-    access_token: accessToken.value,
-  });
-  if (session.error) {
-    Astro.cookies.delete("sb-access-token", { path: "/" });
-    Astro.cookies.delete("sb-refresh-token", { path: "/" });
-    return Astro.redirect("/auth/signin");
-  }
-  } catch (error) {
-  Astro.cookies.delete("sb-access-token", { path: "/" });
-  Astro.cookies.delete("sb-refresh-token", { path: "/" });
-  return Astro.redirect("/auth/signin");
-}
-
-const user = session.data.user;
-const email = user?.email;
+const { user } = Astro.locals;
 
 if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-// Get profile using API
-const profileResponse = await fetch(`${Astro.url.origin}/api/profile/get`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
-
-let profile = null;
-if (profileResponse.ok) {
-  profile = await profileResponse.json();
-}
-
-// Get clients stats using API
-const clientsResponse = await fetch(`${Astro.url.origin}/api/clients/list`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
-
-let clients = [];
-if (clientsResponse.ok) {
-  clients = await clientsResponse.json();
-}
+const profile = await ProfileService.getProfile(user.id);
+const clients = await ClientService.getClients(user.id);
+const contractTemplates = await TemplateService.getContractTemplates(user.id);
+const questionnaireTemplates = await TemplateService.getQuestionnaireTemplates(
+  user.id,
+);
 
 const totalClients = clients?.length || 0;
 const pendingClients =
-  clients?.filter((c: any) => c.status === "pending").length || 0;
+  clients?.filter((c) => c.status === "pending").length || 0;
 const completedClients =
-  clients?.filter((c: any) => c.status === "completed").length || 0;
-
-// Get templates using API
-const contractTemplatesResponse = await fetch(`${Astro.url.origin}/api/templates/contracts/list`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
-
-let contractTemplates = [];
-if (contractTemplatesResponse.ok) {
-  contractTemplates = await contractTemplatesResponse.json();
-}
-
-const questionnaireTemplatesResponse = await fetch(`${Astro.url.origin}/api/templates/questionnaires/list`, {
-  method: 'GET',
-  headers: {
-    'Cookie': `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`
-  }
-});
-
-let questionnaireTemplates = [];
-if (questionnaireTemplatesResponse.ok) {
-  questionnaireTemplates = await questionnaireTemplatesResponse.json();
-}
+  clients?.filter((c) => c.status === "completed").length || 0;
 ---
 
 <Layout title="Dashboard">
@@ -101,51 +34,50 @@ if (questionnaireTemplatesResponse.ok) {
       <p class="page-subtitle">Vista general de tu despacho</p>
     </header>
 
-      <section class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value">{totalClients}</div>
-          <div class="stat-label">Total Clientes</div>
-        </div>
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">{totalClients}</div>
+        <div class="stat-label">Total Clientes</div>
+      </div>
 
-        <div class="stat-card">
-          <div class="stat-value">{pendingClients}</div>
-          <div class="stat-label">Pendientes</div>
-        </div>
+      <div class="stat-card">
+        <div class="stat-value">{pendingClients}</div>
+        <div class="stat-label">Pendientes</div>
+      </div>
 
-        <div class="stat-card">
-          <div class="stat-value">{completedClients}</div>
-          <div class="stat-label">Completados</div>
-        </div>
-      </section>
+      <div class="stat-card">
+        <div class="stat-value">{completedClients}</div>
+        <div class="stat-label">Completados</div>
+      </div>
+    </section>
 
-      <section class="templates-section">
-        <div class="template-stat">
-          <span class="template-count">{contractTemplates?.length || 0}</span>
-          <span class="template-text">Plantillas de Contratos</span>
-        </div>
-        <div class="template-stat">
-          <span class="template-count"
-            >{questionnaireTemplates?.length || 0}</span
-          >
-          <span class="template-text">Plantillas de Cuestionarios</span>
-        </div>
-      </section>
+    <section class="templates-section">
+      <div class="template-stat">
+        <span class="template-count">{contractTemplates?.length || 0}</span>
+        <span class="template-text">Plantillas de Contratos</span>
+      </div>
+      <div class="template-stat">
+        <span class="template-count">{questionnaireTemplates?.length || 0}</span
+        >
+        <span class="template-text">Plantillas de Cuestionarios</span>
+      </div>
+    </section>
 
-      <section class="actions-section">
-        <h2 class="section-title">Acciones</h2>
-        <div class="actions-grid">
-          <a href="/dashboard/clients/new" class="action-card primary">
-            <span class="action-label">Nueva Sala de Bienvenida</span>
-          </a>
-          <a href="/dashboard/clients" class="action-card">
-            <span class="action-label">Ver Clientes</span>
-          </a>
-          <a href="/dashboard/profile" class="action-card">
-            <span class="action-label">Configurar Despacho</span>
-          </a>
-        </div>
-      </section>
-    </main>
+    <section class="actions-section">
+      <h2 class="section-title">Acciones</h2>
+      <div class="actions-grid">
+        <a href="/dashboard/clients/new" class="action-card primary">
+          <span class="action-label">Nueva Sala de Bienvenida</span>
+        </a>
+        <a href="/dashboard/clients" class="action-card">
+          <span class="action-label">Ver Clientes</span>
+        </a>
+        <a href="/dashboard/profile" class="action-card">
+          <span class="action-label">Configurar Despacho</span>
+        </a>
+      </div>
+    </section>
+  </main>
 </Layout>
 
 <style>
