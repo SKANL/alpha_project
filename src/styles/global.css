@@ -8,9 +8,8 @@
     .modal-backdrop,
     ui-confirm-dialog,
     ui-alert-dialog {
-        background: radial-gradient(circle at center,
-                rgba(0, 0, 0, 0.85) 0%,
-                rgba(0, 0, 0, 0.95) 100%);
+        background: rgba(15, 15, 14, 0.85);
+        /* surface-base with opacity */
         backdrop-filter: blur(8px);
     }
 
@@ -27,5 +26,20 @@
     ui-confirm-dialog:focus,
     ui-alert-dialog:focus {
         outline: none;
+    }
+}
+
+@layer base {
+    ::selection {
+        background-color: theme('colors.brand.light');
+        color: theme('colors.brand.text');
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-surface-base text-content-primary;
     }
 }

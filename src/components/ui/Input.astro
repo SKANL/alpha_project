@@ -23,7 +23,7 @@ const inputId = id || rest.name || Math.random().toString(36).substring(7);
     <input
         id={inputId}
         class:list={[
-            "w-full bg-surface-card border rounded px-3 py-2.5 text-content-primary text-sm transition-all duration-300 placeholder:text-content-muted focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-light",
+            "w-full bg-surface-card border rounded-sm px-3 py-2.5 text-content-primary text-sm transition-all duration-500 placeholder:text-content-muted focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-light",
             error
                 ? "border-status-error focus:border-status-error"
                 : "border-border",

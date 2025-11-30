@@ -13,21 +13,14 @@ const { id = "confirm-dialog" } = Astro.props;
     aria-modal="true"
 >
     <div
-        class="confirm-content relative w-full max-w-md transform overflow-hidden rounded-2xl bg-gradient-to-br from-surface-floating to-surface-card border border-border-strong shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.05)] backdrop-blur-xl p-6 transition-all"
-        style="background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%); backdrop-filter: blur(20px);"
+        class="confirm-content relative w-full max-w-md transform overflow-hidden rounded-sm bg-surface-card border border-border shadow-2xl p-8 transition-all duration-500"
     >
-        <!-- Decorative border glow -->
-        <div
-            class="absolute inset-0 rounded-2xl bg-gradient-to-br from-status-error/10 via-transparent to-transparent pointer-events-none"
-        >
-        </div>
-
         <!-- Icon -->
         <div
-            class="relative flex items-center justify-center w-12 h-12 rounded-full bg-status-error/10 mb-4"
+            class="relative flex items-center justify-center w-12 h-12 rounded-full bg-surface-highlight mb-6 mx-auto"
         >
             <svg
-                class="w-6 h-6 text-status-error"
+                class="w-5 h-5 text-status-warning"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -35,7 +28,7 @@ const { id = "confirm-dialog" } = Astro.props;
                 <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    stroke-width="2"
+                    stroke-width="1.5"
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 ></path>
             </svg>
@@ -43,24 +36,26 @@ const { id = "confirm-dialog" } = Astro.props;
 
         <!-- Message -->
         <h3
-            class="confirm-title relative text-lg font-medium tracking-zen text-content-primary mb-2"
+            class="confirm-title relative text-xl font-serif text-center text-content-primary mb-3"
         >
             Confirmar acción
         </h3>
-        <p class="confirm-message relative text-sm text-content-secondary mb-6">
+        <p
+            class="confirm-message relative text-sm text-center text-content-secondary font-light leading-relaxed mb-8"
+        >
             ¿Estás seguro de realizar esta acción?
         </p>
 
         <!-- Actions -->
-        <div class="relative flex gap-3 justify-end">
+        <div class="relative flex gap-4 justify-center">
             <button
-                class="confirm-cancel px-4 py-2 rounded-lg text-sm font-medium text-content-secondary bg-surface-highlight hover:bg-surface-highlight/80 border border-border transition-all duration-200 hover:scale-105 active:scale-95"
+                class="confirm-cancel px-6 py-2 rounded-sm text-sm font-medium tracking-wide text-content-secondary hover:text-content-primary transition-colors duration-300"
                 type="button"
             >
                 Cancelar
             </button>
             <button
-                class="confirm-accept px-4 py-2 rounded-lg text-sm font-medium text-white bg-status-error hover:bg-status-error/90 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-status-error/20"
+                class="confirm-accept px-6 py-2 rounded-sm text-sm font-medium tracking-wide text-surface-base bg-brand hover:bg-brand-hover transition-colors duration-500 shadow-sm"
                 type="button"
             >
                 Confirmar
