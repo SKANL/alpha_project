@@ -27,7 +27,13 @@ const questionnaires = await TemplateService.getQuestionnaireTemplates(user.id);
     />
 
     <div class="mb-12 pb-8 border-b border-border-weak">
-      <Button id="openModalBtn" variant="primary"> NUEVO CUESTIONARIO </Button>
+      <Button
+        id="openModalBtn"
+        variant="primary"
+        onclick="window.dispatchEvent(new CustomEvent('toggle-modal-questionnaireModal'))"
+      >
+        NUEVO CUESTIONARIO
+      </Button>
     </div>
 
     {
@@ -45,14 +51,14 @@ const questionnaires = await TemplateService.getQuestionnaireTemplates(user.id);
                   </p>
                 </div>
                 <div class="flex gap-6">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="text-xs text-content-secondary hover:text-status-error delete-btn"
+                  <delete-trigger
+                    class="text-xs text-content-secondary hover:text-status-error cursor-pointer font-medium"
                     data-id={q.id}
+                    data-action="/api/templates/questionnaires/delete"
+                    data-confirm="¿Eliminar este cuestionario?"
                   >
                     Eliminar
-                  </Button>
+                  </delete-trigger>
                 </div>
               </div>
             ),
@@ -71,158 +77,60 @@ const questionnaires = await TemplateService.getQuestionnaireTemplates(user.id);
     }
 
     <Modal id="questionnaireModal" title="Nuevo Cuestionario">
-      <form id="questionnaireForm" class="flex flex-col gap-6">
-        <Input
-          label="Nombre del Cuestionario"
-          type="text"
-          id="name"
-          name="name"
-          placeholder="Cuestionario de Divorcio"
-          required
-        />
+      <questionnaire-form data-modal-id="questionnaireModal">
+        <form id="questionnaireForm" class="flex flex-col gap-6">
+          <Input
+            label="Nombre del Cuestionario"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Cuestionario de Divorcio"
+            required
+          />
 
-        <div class="flex flex-col gap-4">
-          <div class="flex justify-between items-center">
-            <label
-              class="text-xs uppercase tracking-widest text-content-secondary font-light"
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+              <label
+                class="text-xs uppercase tracking-widest text-content-secondary font-light"
+              >
+                Preguntas
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                id="addQuestionBtn"
+                class="text-xs text-brand hover:text-brand-hover p-0 h-auto"
+              >
+                + AGREGAR PREGUNTA
+              </Button>
+            </div>
+
+            <div
+              id="questionsContainer"
+              class="flex flex-col gap-4 max-h-[40vh] overflow-y-auto pr-2"
             >
-              Preguntas
-            </label>
+              <!-- Questions will be added here -->
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-4 mt-4">
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              id="addQuestionBtn"
-              class="text-xs text-brand hover:text-brand-hover p-0 h-auto"
+              onclick="window.dispatchEvent(new CustomEvent('toggle-modal-questionnaireModal'))"
             >
-              + AGREGAR PREGUNTA
+              CANCELAR
             </Button>
+            <Button type="submit" variant="primary"> GUARDAR </Button>
           </div>
-
-          <div
-            id="questionsContainer"
-            class="flex flex-col gap-4 max-h-[40vh] overflow-y-auto pr-2"
-          >
-            <!-- Questions will be added here -->
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-4 mt-4">
-          <Button type="button" variant="ghost" id="closeModalBtn">
-            CANCELAR
-          </Button>
-          <Button type="submit" variant="primary"> GUARDAR </Button>
-        </div>
-      </form>
+        </form>
+      </questionnaire-form>
     </Modal>
   </main>
 </Layout>
 
 <script>
-  function initQuestionnaires() {
-    const modal = document.getElementById("questionnaireModal");
-    const form = document.getElementById(
-      "questionnaireForm",
-    ) as HTMLFormElement;
-    const openBtn = document.getElementById("openModalBtn");
-    const closeBtn = document.getElementById("closeModalBtn");
-    const addQuestionBtn = document.getElementById("addQuestionBtn");
-    const questionsContainer = document.getElementById("questionsContainer");
-
-    const toggleModal = () => {
-      window.dispatchEvent(new CustomEvent("toggle-modal-questionnaireModal"));
-    };
-
-    openBtn?.addEventListener("click", toggleModal);
-    closeBtn?.addEventListener("click", toggleModal);
-
-    let questionCount = 0;
-
-    const addQuestionInput = () => {
-      const div = document.createElement("div");
-      div.className = "flex gap-2 items-start animate-fade-in-up";
-      div.innerHTML = `
-        <div class="flex-1">
-          <input
-            type="text"
-            name="questions[]"
-            placeholder="Escribe la pregunta..."
-            required
-            class="w-full bg-surface-card border border-border rounded px-3 py-2 text-content-primary text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand-light"
-          />
-        </div>
-        <button type="button" class="text-content-muted hover:text-status-error p-2 remove-question">
-          ×
-        </button>
-      `;
-
-      div.querySelector(".remove-question")?.addEventListener("click", () => {
-        div.remove();
-      });
-
-      questionsContainer?.appendChild(div);
-      questionCount++;
-    };
-
-    // Add initial question
-    if (questionsContainer && questionsContainer.children.length === 0) {
-      addQuestionInput();
-    }
-
-    addQuestionBtn?.addEventListener("click", addQuestionInput);
-
-    form?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-
-      // Get questions array manually since FormData.getAll might behave differently across browsers/environments
-      const questions = Array.from(
-        form.querySelectorAll('input[name="questions[]"]'),
-      )
-        .map((input) => (input as HTMLInputElement).value)
-        .filter(Boolean);
-
-      const data = {
-        name: formData.get("name"),
-        questions: questions,
-      };
-
-      try {
-        const response = await fetch("/api/templates/questionnaires/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        if (response.ok) {
-          window.location.reload();
-        } else {
-          alert("Error al crear cuestionario");
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Error al crear cuestionario");
-      }
-    });
-
-    document.querySelectorAll(".delete-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("¿Eliminar cuestionario?")) return;
-        const id = (btn as HTMLElement).dataset.id;
-        try {
-          const response = await fetch("/api/templates/questionnaires/delete", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
-          });
-          if (response.ok) window.location.reload();
-        } catch (error) {
-          console.error(error);
-          alert("Error al eliminar cuestionario");
-        }
-      });
-    });
-  }
-
-  initQuestionnaires();
-  document.addEventListener("astro:page-load", initQuestionnaires);
+  import "@/components/interactive/QuestionnaireForm";
+  import "@/components/interactive/DeleteTrigger";
 </script>

@@ -7,7 +7,7 @@ interface Props {
 const { id, title } = Astro.props;
 ---
 
-<div
+<ui-modal
     id={id}
     class="fixed inset-0 z-50 hidden items-center justify-center bg-surface-base/90 backdrop-blur-sm transition-all duration-300"
     role="dialog"
@@ -25,31 +25,8 @@ const { id, title } = Astro.props;
         </h2>
         <slot />
     </div>
-</div>
+</ui-modal>
 
-<script define:vars={{ id }}>
-    // Simple modal logic
-    const modal = document.getElementById(id);
-
-    // Expose toggle function globally or via event
-    window.addEventListener(`toggle-modal-${id}`, () => {
-        if (modal) {
-            const isHidden = modal.classList.contains("hidden");
-            if (isHidden) {
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-            } else {
-                modal.classList.add("hidden");
-                modal.classList.remove("flex");
-            }
-        }
-    });
-
-    // Close on background click
-    modal?.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
-        }
-    });
+<script>
+    import "@/components/interactive/UiModal";
 </script>

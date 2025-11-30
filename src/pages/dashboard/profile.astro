@@ -21,56 +21,58 @@ const profile = await ProfileService.getProfile(user.id);
   <main class="flex-1 ml-60 p-16 max-w-5xl">
     <PageHeader title="Despacho" subtitle="Configuración de tu firma legal" />
 
-    <form id="profileForm" class="max-w-2xl flex flex-col gap-8">
-      <Input
-        label="Nombre del Despacho"
-        type="text"
-        id="firm_name"
-        name="firm_name"
-        value={profile?.firm_name || ""}
-        required
-      />
-
-      <div class="flex flex-col gap-2">
-        <label
-          class="text-xs uppercase tracking-widest text-content-secondary font-light"
-        >
-          Logo
-        </label>
-        <input
-          type="file"
-          id="logo"
-          name="logo"
-          accept="image/*"
-          class="w-full bg-transparent border-b border-border py-4 text-content-primary text-base font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
+    <profile-form>
+      <form id="profileForm" class="max-w-2xl flex flex-col gap-8">
+        <Input
+          label="Nombre del Despacho"
+          type="text"
+          id="firm_name"
+          name="firm_name"
+          value={profile?.firm_name || ""}
+          required
         />
-        {
-          profile?.firm_logo_url && (
-            <div class="mt-8 p-8 bg-surface-highlight/20 border border-border-weak rounded inline-block">
-              <img
-                src={profile.firm_logo_url}
-                alt="Logo"
-                class="max-w-[200px] max-h-[100px] object-contain block"
-              />
-            </div>
-          )
-        }
-      </div>
 
-      <Input
-        label="Link de Agenda"
-        type="url"
-        id="calendar_link"
-        name="calendar_link"
-        value={profile?.calendar_link || ""}
-        placeholder="https://calendly.com/tu-usuario"
-        hint="Este link se mostrará al cliente al final del proceso de bienvenida"
-      />
+        <div class="flex flex-col gap-2">
+          <label
+            class="text-xs uppercase tracking-widest text-content-secondary font-light"
+          >
+            Logo
+          </label>
+          <input
+            type="file"
+            id="logo"
+            name="logo"
+            accept="image/*"
+            class="w-full bg-transparent border-b border-border py-4 text-content-primary text-base font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
+          />
+          {
+            profile?.firm_logo_url && (
+              <div class="mt-8 p-8 bg-surface-highlight/20 border border-border-weak rounded inline-block">
+                <img
+                  src={profile.firm_logo_url}
+                  alt="Logo"
+                  class="max-w-[200px] max-h-[100px] object-contain block"
+                />
+              </div>
+            )
+          }
+        </div>
 
-      <div class="pt-8">
-        <Button type="submit" variant="secondary"> GUARDAR CAMBIOS </Button>
-      </div>
-    </form>
+        <Input
+          label="Link de Agenda"
+          type="url"
+          id="calendar_link"
+          name="calendar_link"
+          value={profile?.calendar_link || ""}
+          placeholder="https://calendly.com/tu-usuario"
+          hint="Este link se mostrará al cliente al final del proceso de bienvenida"
+        />
+
+        <div class="pt-8">
+          <Button type="submit" variant="secondary"> GUARDAR CAMBIOS </Button>
+        </div>
+      </form>
+    </profile-form>
 
     <div
       id="successMessage"
@@ -82,54 +84,5 @@ const profile = await ProfileService.getProfile(user.id);
 </Layout>
 
 <script>
-  const form = document.getElementById("profileForm") as HTMLFormElement;
-  const successMessage = document.getElementById("successMessage");
-
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch("/api/profile/update", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const body = await response.json();
-
-        const nameInput = document.getElementById(
-          "firm_name",
-        ) as HTMLInputElement;
-        const calendarInput = document.getElementById(
-          "calendar_link",
-        ) as HTMLInputElement;
-
-        if (body?.firm_name && nameInput) nameInput.value = body.firm_name;
-        if (body?.calendar_link && calendarInput)
-          calendarInput.value = body.calendar_link;
-
-        if (body?.firm_logo_url) {
-          // Logic to update image preview would go here, simplified for brevity as page reload is often easier or sufficient for images
-          // But let's try to find the img tag
-          const img = document.querySelector(
-            "img[alt='Logo']",
-          ) as HTMLImageElement;
-          if (img) img.src = body.firm_logo_url;
-        }
-
-        if (successMessage) {
-          successMessage.classList.remove("translate-x-full", "opacity-0");
-          setTimeout(() => {
-            successMessage.classList.add("translate-x-full", "opacity-0");
-          }, 3000);
-        }
-      } else {
-        alert("Error al guardar el perfil");
-      }
-    } catch (error) {
-      alert("Error al guardar el perfil");
-    }
-  });
+  import "@/components/interactive/ProfileForm";
 </script>

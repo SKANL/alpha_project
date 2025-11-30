@@ -27,7 +27,13 @@ const contracts = await TemplateService.getContractTemplates(user.id);
     />
 
     <div class="mb-12 pb-8 border-b border-border-weak">
-      <Button id="openModalBtn" variant="primary"> NUEVA PLANTILLA </Button>
+      <Button
+        id="openModalBtn"
+        variant="primary"
+        onclick="window.dispatchEvent(new CustomEvent('toggle-modal-contractModal'))"
+      >
+        NUEVA PLANTILLA
+      </Button>
     </div>
 
     {
@@ -53,14 +59,14 @@ const contracts = await TemplateService.getContractTemplates(user.id);
                 >
                   Ver PDF
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="text-xs text-content-secondary hover:text-status-error delete-btn"
+                <delete-trigger
+                  class="text-xs text-content-secondary hover:text-status-error cursor-pointer font-medium"
                   data-id={contract.id}
+                  data-action="/api/templates/contracts/delete"
+                  data-confirm="¿Eliminar esta plantilla?"
                 >
                   Eliminar
-                </Button>
+                </delete-trigger>
               </div>
             </div>
           ))}
@@ -78,95 +84,50 @@ const contracts = await TemplateService.getContractTemplates(user.id);
     }
 
     <Modal id="contractModal" title="Nueva Plantilla de Contrato">
-      <form id="contractForm" class="flex flex-col gap-6">
-        <Input
-          label="Nombre"
-          type="text"
-          id="name"
-          name="name"
-          placeholder="Contrato de Servicios"
-          required
-        />
-
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-xs uppercase tracking-widest text-content-secondary font-light"
-          >
-            Archivo PDF
-          </label>
-          <input
-            type="file"
-            id="file"
-            name="file"
-            accept=".pdf"
+      <contract-form data-modal-id="contractModal">
+        <form id="contractForm" class="flex flex-col gap-6">
+          <Input
+            label="Nombre"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Contrato de Servicios"
             required
-            class="w-full bg-transparent border-b border-border py-2 text-content-primary text-sm font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
           />
-        </div>
 
-        <div class="flex justify-end gap-4 mt-4">
-          <Button type="button" variant="ghost" id="closeModalBtn">
-            CANCELAR
-          </Button>
-          <Button type="submit" variant="primary"> GUARDAR </Button>
-        </div>
-      </form>
+          <div class="flex flex-col gap-2">
+            <label
+              class="text-xs uppercase tracking-widest text-content-secondary font-light"
+            >
+              Archivo PDF
+            </label>
+            <input
+              type="file"
+              id="file"
+              name="file"
+              accept=".pdf"
+              required
+              class="w-full bg-transparent border-b border-border py-2 text-content-primary text-sm font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
+            />
+          </div>
+
+          <div class="flex justify-end gap-4 mt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onclick="window.dispatchEvent(new CustomEvent('toggle-modal-contractModal'))"
+            >
+              CANCELAR
+            </Button>
+            <Button type="submit" variant="primary"> GUARDAR </Button>
+          </div>
+        </form>
+      </contract-form>
     </Modal>
   </main>
 </Layout>
 
 <script>
-  function initContracts() {
-    const modal = document.getElementById("contractModal");
-    const form = document.getElementById("contractForm") as HTMLFormElement;
-    const openBtn = document.getElementById("openModalBtn");
-    const closeBtn = document.getElementById("closeModalBtn");
-
-    const toggleModal = () => {
-      window.dispatchEvent(new CustomEvent("toggle-modal-contractModal"));
-    };
-
-    openBtn?.addEventListener("click", toggleModal);
-    closeBtn?.addEventListener("click", toggleModal);
-
-    form?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      try {
-        const response = await fetch("/api/templates/contracts/create", {
-          method: "POST",
-          body: formData,
-        });
-        if (response.ok) {
-          window.location.reload();
-        } else {
-          alert("Error al crear plantilla");
-        }
-      } catch (error) {
-        console.error(error);
-        alert("Error al crear plantilla");
-      }
-    });
-
-    document.querySelectorAll(".delete-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("¿Eliminar plantilla?")) return;
-        const id = (btn as HTMLElement).dataset.id;
-        try {
-          const response = await fetch("/api/templates/contracts/delete", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
-          });
-          if (response.ok) window.location.reload();
-        } catch (error) {
-          console.error(error);
-          alert("Error al eliminar plantilla");
-        }
-      });
-    });
-  }
-
-  initContracts();
-  document.addEventListener("astro:page-load", initContracts);
+  import "@/components/interactive/ContractForm";
+  import "@/components/interactive/DeleteTrigger";
 </script>

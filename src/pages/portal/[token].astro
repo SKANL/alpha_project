@@ -77,7 +77,11 @@ const clientId = client.id;
 
     <!-- Main Content -->
     <main class="flex-1 flex items-center justify-center p-4">
-      <div class="w-full max-w-2xl animate-fade-in-up" id="mainContainer">
+      <portal-flow
+        data-client-id={clientId}
+        data-initial-step={currentStep}
+        class="w-full max-w-2xl"
+      >
         <!-- STEP: WELCOME -->
         <div id="step-welcome" class="step-content text-center">
           <h2 class="text-4xl font-light text-content-primary mb-4">
@@ -256,134 +260,11 @@ const clientId = client.id;
             )
           }
         </div>
-      </div>
+      </portal-flow>
     </main>
   </div>
 </Layout>
 
-<script define:vars={{ initialStep: currentStep, clientId }}>
-  // State Management
-  const steps = [
-    "welcome",
-    "contract",
-    "questionnaire",
-    "documents",
-    "calendar",
-  ];
-  let currentStepIndex = steps.indexOf(
-    initialStep === "completed" ? "calendar" : initialStep,
-  );
-  if (currentStepIndex === -1) currentStepIndex = 0;
-
-  function showStep(index) {
-    document
-      .querySelectorAll(".step-content")
-      .forEach((el) => el.classList.add("hidden"));
-    const stepId = `step-${steps[index]}`;
-    document.getElementById(stepId)?.classList.remove("hidden");
-    window.scrollTo(0, 0);
-  }
-
-  // Initial Render
-  showStep(currentStepIndex);
-
-  // Event Listeners
-
-  // 1. Welcome -> Contract
-  document.getElementById("startBtn")?.addEventListener("click", () => {
-    currentStepIndex = 1;
-    showStep(currentStepIndex);
-  });
-
-  // 2. Contract Logic
-  const acceptCheckbox = document.getElementById("acceptContract");
-  const signBtn = document.getElementById("signContractBtn");
-
-  acceptCheckbox?.addEventListener("change", (e) => {
-    if (signBtn) signBtn.disabled = !e.target.checked;
-  });
-
-  signBtn?.addEventListener("click", async () => {
-    try {
-      signBtn.textContent = "FIRMANDO...";
-      const response = await fetch("/api/portal/sign-contract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId }),
-      });
-
-      if (response.ok) {
-        currentStepIndex = 2;
-        showStep(currentStepIndex);
-      } else {
-        alert("Error al firmar contrato");
-        signBtn.textContent = "FIRMAR Y CONTINUAR";
-      }
-    } catch (e) {
-      alert("Error de conexión");
-      signBtn.textContent = "FIRMAR Y CONTINUAR";
-    }
-  });
-
-  // 3. Questionnaire Logic
-  const qForm = document.getElementById("questionnaireForm");
-  qForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = qForm.querySelector('button[type="submit"]');
-    if (btn) btn.textContent = "ENVIANDO...";
-
-    const formData = new FormData(qForm);
-    const answers = {};
-    formData.forEach((value, key) => {
-      answers[key] = value;
-    });
-
-    try {
-      const response = await fetch("/api/portal/submit-questionnaire", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, answers }),
-      });
-
-      if (response.ok) {
-        currentStepIndex = 3;
-        showStep(currentStepIndex);
-      } else {
-        alert("Error al enviar respuestas");
-        if (btn) btn.textContent = "ENVIAR RESPUESTAS";
-      }
-    } catch (e) {
-      alert("Error de conexión");
-      if (btn) btn.textContent = "ENVIAR RESPUESTAS";
-    }
-  });
-
-  // 4. Documents Logic
-  const docsForm = document.getElementById("docsForm");
-  docsForm?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = docsForm.querySelector('button[type="submit"]');
-    if (btn) btn.textContent = "SUBIENDO...";
-
-    const formData = new FormData(docsForm);
-    formData.append("clientId", clientId);
-
-    try {
-      const response = await fetch("/api/portal/upload-documents", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        currentStepIndex = 4;
-        showStep(currentStepIndex);
-      } else {
-        alert("Error al subir documentos");
-        if (btn) btn.textContent = "SUBIR DOCUMENTOS";
-      }
-    } catch (e) {
-      alert("Error de conexión");
-      if (btn) btn.textContent = "SUBIR DOCUMENTOS";
-    }
-  });
+<script>
+  import "@/components/interactive/PortalFlow";
 </script>
