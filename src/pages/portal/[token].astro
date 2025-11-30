@@ -18,7 +18,10 @@ const { data: client, error } = await supabase
     `
     *,
     contract_template:contract_templates(*),
-    questionnaire_template:questionnaire_templates(*)
+    questionnaire_template:questionnaire_templates(
+      *,
+      questions(*)
+    )
   `,
   )
   .eq("magic_link_token", token)
@@ -28,31 +31,37 @@ if (error || !client) {
   return Astro.redirect("/404");
 }
 
-// 2. Get Profile (Lawyer) Info for branding
+// 2. Check if link was already used
+if (client.link_used) {
+  // Link has been used - show completion message or redirect
+  return Astro.redirect("/portal/link-expired");
+}
+
+// 3. Get Profile (Lawyer) Info for branding
 const { data: profile } = await supabase
   .from("profiles")
   .select("*")
   .eq("user_id", client.user_id)
   .single();
 
-// 3. Determine Current Step
+// 4. Determine Current Step
 // steps: 'welcome' | 'contract' | 'questionnaire' | 'documents' | 'calendar' | 'completed'
 let currentStep = "welcome";
 
 if (client.status === "completed") {
   currentStep = "completed";
-} else if (client.contract_signed) {
+} else if (client.contract_signed_url) {
   currentStep = "questionnaire";
-  if (client.questionnaire_answers) {
+  // Check if questionnaire answers exist
+  const { count } = await supabase
+    .from("client_answers")
+    .select("*", { count: "exact", head: true })
+    .eq("client_id", client.id);
+
+  if (count && count > 0) {
     currentStep = "documents";
-    // Check if documents are uploaded (simplified check)
-    // In a real app, we'd check the storage or a 'documents_uploaded' flag
-    // For now, let's assume if they are here, they might be done or uploading
-    // We'll handle state transitions via client-side logic mostly for this single-page flow
   }
 }
-
-const clientId = client.id;
 ---
 
 <Layout title={`Bienvenido | ${profile?.firm_name || "Legal Studio"}`}>
@@ -78,8 +87,9 @@ const clientId = client.id;
     <!-- Main Content -->
     <main class="flex-1 flex items-center justify-center p-4">
       <portal-flow
-        data-client-id={clientId}
+        data-token={token}
         data-initial-step={currentStep}
+        data-required-docs={client.required_documents?.join(",")}
         class="w-full max-w-2xl"
       >
         <!-- STEP: WELCOME -->
@@ -149,10 +159,24 @@ const clientId = client.id;
                 </a>
               </div>
             </div>
+
+            <div class="mb-8">
+              <h3
+                class="text-xs font-light tracking-widest uppercase text-content-secondary mb-4"
+              >
+                Firma Digital
+              </h3>
+              <p class="text-xs font-light text-content-muted mb-4">
+                Por favor, dibuja tu firma en el espacio below para firmar
+                digitalmente el contrato.
+              </p>
+              <signature-pad id="signature-pad"></signature-pad>
+            </div>
+
             <div class="flex items-center gap-3 mb-8">
               <input
                 type="checkbox"
-                id="acceptContract"
+                id="accept Contract"
                 class="w-5 h-5 accent-brand"
               />
               <label
@@ -178,11 +202,13 @@ const clientId = client.id;
             </h3>
             <form id="questionnaireForm" class="flex flex-col gap-6">
               {
-                client.questionnaire_template?.questions?.map(
-                  (q: string, index: number) => (
-                    <Input label={q} name={`q_${index}`} required />
-                  ),
-                )
+                client.questionnaire_template?.questions?.map((q: any) => (
+                  <Input
+                    label={q.question_text}
+                    name={`answer_${q.id}`}
+                    required
+                  />
+                ))
               }
               <div class="flex justify-end pt-4">
                 <Button type="submit" variant="primary">
@@ -202,7 +228,7 @@ const clientId = client.id;
             <p class="text-sm font-light text-content-secondary mb-8">
               Por favor sube los siguientes documentos en formato PDF o imagen.
             </p>
-            <form id="docsForm" class="flex flex-col gap-6">
+            <div class="flex flex-col gap-6">
               {
                 client.required_documents?.map((doc: string) => (
                   <div class="flex flex-col gap-2">
@@ -212,18 +238,19 @@ const clientId = client.id;
                     <input
                       type="file"
                       name={doc}
-                      required
+                      data-doc-type={doc}
+                      accept="image/*,application/pdf"
                       class="w-full bg-surface-base border border-border rounded px-3 py-2 text-content-primary text-sm font-light focus:outline-none focus:border-brand transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-medium file:bg-surface-highlight file:text-content-primary hover:file:bg-surface-highlight/80"
                     />
                   </div>
                 ))
               }
               <div class="flex justify-end pt-4">
-                <Button type="submit" variant="primary">
-                  SUBIR DOCUMENTOS
+                <Button id="continueDocsBtn" variant="primary">
+                  CONTINUAR
                 </Button>
               </div>
-            </form>
+            </div>
           </Card>
         </div>
 
@@ -267,4 +294,5 @@ const clientId = client.id;
 
 <script>
   import "@/components/interactive/PortalFlow";
+  import "@/components/interactive/SignaturePad";
 </script>

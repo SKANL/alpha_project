@@ -3,15 +3,19 @@ import { PortalApi } from "@/lib/api/portal";
 export class PortalFlow extends HTMLElement {
     private currentStepIndex: number = 0;
     private steps: string[] = ["welcome", "contract", "questionnaire", "documents", "calendar"];
-    private clientId: string = "";
+    private token: string = "";
+    private requiredDocuments: string[] = [];
+    private uploadedDocuments: Set<string> = new Set();
 
     constructor() {
         super();
     }
 
     connectedCallback() {
-        this.clientId = this.dataset.clientId || "";
+        this.token = this.dataset.token || "";
         const initialStep = this.dataset.initialStep || "welcome";
+        const requiredDocs = this.dataset.requiredDocs || "";
+        this.requiredDocuments = requiredDocs ? requiredDocs.split(",") : [];
 
         this.currentStepIndex = this.steps.indexOf(
             initialStep === "completed" ? "calendar" : initialStep
@@ -32,23 +36,6 @@ export class PortalFlow extends HTMLElement {
         const acceptCheckbox = this.querySelector("#acceptContract") as HTMLInputElement;
         const signBtn = this.querySelector("#signContractBtn") as HTMLButtonElement;
 
-        acceptCheckbox?.addEventListener("change", (e) => {
-            if (signBtn) signBtn.disabled = !(e.target as HTMLInputElement).checked;
-        });
-
-        signBtn?.addEventListener("click", async () => {
-            try {
-                signBtn.textContent = "FIRMANDO...";
-                signBtn.disabled = true;
-                await PortalApi.signContract(this.clientId);
-                this.advanceStep();
-            } catch (e) {
-                alert("Error al firmar contrato");
-                signBtn.textContent = "FIRMAR Y CONTINUAR";
-                signBtn.disabled = false;
-            }
-        });
-
         // 3. Questionnaire Logic
         const qForm = this.querySelector("#questionnaireForm") as HTMLFormElement;
         qForm?.addEventListener("submit", async (e) => {
@@ -57,13 +44,20 @@ export class PortalFlow extends HTMLElement {
             if (btn) btn.textContent = "ENVIANDO...";
 
             const formData = new FormData(qForm);
-            const answers: Record<string, string> = {};
+            const answers: { question_id: string; answer_text: string }[] = [];
+
             formData.forEach((value, key) => {
-                answers[key] = value as string;
+                if (key.startsWith("answer_")) {
+                    const question_id = key.replace("answer_", "");
+                    answers.push({
+                        question_id,
+                        answer_text: value as string
+                    });
+                }
             });
 
             try {
-                await PortalApi.submitQuestionnaire(this.clientId, answers);
+                await PortalApi.submitQuestionnaire(this.token, answers);
                 this.advanceStep();
             } catch (e) {
                 alert("Error al enviar respuestas");
@@ -71,24 +65,63 @@ export class PortalFlow extends HTMLElement {
             }
         });
 
-        // 4. Documents Logic
-        const docsForm = this.querySelector("#docsForm") as HTMLFormElement;
-        docsForm?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const btn = docsForm.querySelector('button[type="submit"]');
-            if (btn) btn.textContent = "SUBIENDO...";
+        // 4. Documents Logic - Upload files individually
+        const fileInputs = this.querySelectorAll('input[type="file"]');
+        fileInputs.forEach((input) => {
+            input.addEventListener("change", async (e) => {
+                const fileInput = e.target as HTMLInputElement;
+                const file = fileInput.files?.[0];
+                const document_type = fileInput.dataset.docType;
 
-            const formData = new FormData(docsForm);
-            formData.append("clientId", this.clientId);
+                if (!file || !document_type) return;
 
-            try {
-                await PortalApi.uploadDocuments(formData);
-                this.advanceStep();
-            } catch (e) {
-                alert("Error al subir documentos");
-                if (btn) btn.textContent = "SUBIR DOCUMENTOS";
-            }
+                try {
+                    await PortalApi.uploadDocument(this.token, document_type, file);
+
+                    // Mark as uploaded
+                    this.uploadedDocuments.add(document_type);
+                    fileInput.disabled = true;
+
+                    // Add visual feedback
+                    const label = fileInput.previousElementSibling;
+                    if (label) {
+                        label.textContent += " ✓";
+                        label.classList.add("text-status-success");
+                    }
+
+                    // Check if all documents are uploaded
+                    if (this.uploadedDocuments.size === this.requiredDocuments.length) {
+                        await this.completePortalProcess();
+                    }
+                } catch (error) {
+                    alert(`Error al subir ${document_type}`);
+                }
+            });
         });
+
+        // Continue button for documents step
+        this.querySelector("#continueDocsBtn")?.addEventListener("click", async () => {
+            // Check if all documents uploaded before allowing continue
+            if (this.uploadedDocuments.size < this.requiredDocuments.length) {
+                alert(`Por favor sube todos los ${this.requiredDocuments.length} documentos requeridos`);
+                return;
+            }
+            this.advanceStep();
+        });
+    }
+
+    private async completePortalProcess() {
+        try {
+            await PortalApi.completeProcess(this.token);
+            // Enable continue button after completion
+            const continueBtn = this.querySelector("#continueDocsBtn") as HTMLButtonElement;
+            if (continueBtn) {
+                continueBtn.disabled = false;
+                continueBtn.classList.add("animate-pulse");
+            }
+        } catch (error) {
+            console.error("Error completing process:", error);
+        }
     }
 
     private advanceStep() {

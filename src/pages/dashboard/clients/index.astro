@@ -33,58 +33,71 @@ const clients = await ClientService.getClients(user.id);
 
     {
       clients && clients.length > 0 ? (
-        <Table>
-          <tr slot="header">
-            <th>Cliente</th>
-            <th>Caso</th>
-            <th>Estado</th>
-            <th>Fecha</th>
-            <th class="text-right">Acciones</th>
-          </tr>
-          {clients.map((client) => (
-            <tr>
-              <td class="font-medium text-content-primary">
-                {client.client_name}
-              </td>
-              <td>{client.case_name}</td>
-              <td>
-                <Badge
-                  variant={client.status === "pending" ? "warning" : "success"}
-                >
-                  {client.status === "pending" ? "Pendiente" : "Completado"}
-                </Badge>
-              </td>
-              <td>{new Date(client.created_at).toLocaleDateString("es-MX")}</td>
-              <td class="text-right">
-                <div class="flex justify-end gap-4 items-center">
-                  {client.status === "pending" ? (
-                    <copy-link
-                      class="text-xs font-light text-brand hover:text-brand-hover transition-colors cursor-pointer"
-                      data-token={client.magic_link_token}
+        <clients-list-live data-user-id={user.id}>
+          <Table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Caso</th>
+                <th>Estado</th>
+                <th>Creado</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clients.map((client: any) => (
+                <tr data-client-id={client.id}>
+                  <td class="font-medium text-content-primary">
+                    {client.client_name}
+                  </td>
+                  <td>{client.case_name}</td>
+                  <td>
+                    <Badge
+                      variant={
+                        client.status === "completed" ? "success" : "warning"
+                      }
+                      class="status-badge"
                     >
-                      COPIAR LINK
-                    </copy-link>
-                  ) : (
-                    <a
-                      href={`/dashboard/clients/${client.id}/expediente`}
-                      class="text-xs font-light text-content-secondary hover:text-content-primary transition-colors"
-                    >
-                      VER EXPEDIENTE
-                    </a>
-                  )}
-                  <delete-trigger
-                    class="text-xs font-light text-content-muted hover:text-status-error transition-colors cursor-pointer"
-                    data-id={client.id}
-                    data-action="/api/clients/delete"
-                    data-confirm={`¿Estás seguro de eliminar el expediente de ${client.client_name}? Esta acción no se puede deshacer.`}
-                  >
-                    ELIMINAR
-                  </delete-trigger>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </Table>
+                      {client.status === "completed"
+                        ? "COMPLETADO"
+                        : "PENDIENTE"}
+                    </Badge>
+                  </td>
+                  <td>
+                    {new Date(client.created_at).toLocaleDateString("es-ES")}
+                  </td>
+                  <td>
+                    <div class="flex items-center justify-end gap-4">
+                      {client.status === "pending" ? (
+                        <copy-link
+                          class="text-xs font-light text-brand hover:text-brand-hover transition-colors cursor-pointer"
+                          data-token={client.magic_link_token}
+                        >
+                          COPIAR LINK
+                        </copy-link>
+                      ) : (
+                        <a
+                          href={`/dashboard/clients/${client.id}/expediente`}
+                          class="text-xs font-light text-content-secondary hover:text-content-primary transition-colors"
+                        >
+                          VER EXPEDIENTE
+                        </a>
+                      )}
+                      <delete-trigger
+                        class="text-xs font-light text-content-muted hover:text-status-error transition-colors cursor-pointer"
+                        data-id={client.id}
+                        data-action="/api/clients/delete"
+                        data-confirm={`¿Estás seguro de eliminar el expediente de ${client.client_name}? Esta acción no se puede deshacer.`}
+                      >
+                        ELIMINAR
+                      </delete-trigger>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </clients-list-live>
       ) : (
         <div class="py-24 text-center">
           <h3 class="text-2xl font-light text-content-secondary mb-4">
@@ -105,4 +118,5 @@ const clients = await ClientService.getClients(user.id);
 <script>
   import "@/components/interactive/CopyLink";
   import "@/components/interactive/DeleteTrigger";
+  import "@/components/interactive/ClientsListLive";
 </script>
