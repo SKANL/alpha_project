@@ -1,3 +1,5 @@
+import { toast } from "@/components/interactive/UiToast";
+
 export class CopyLink extends HTMLElement {
     constructor() {
         super();
@@ -17,12 +19,13 @@ export class CopyLink extends HTMLElement {
         try {
             await navigator.clipboard.writeText(link);
             this.textContent = "COPIADO";
+            toast.success("Link copiado al portapapeles");
             setTimeout(() => {
                 this.textContent = originalText;
             }, 2000);
         } catch (err) {
             console.error("Error copying link:", err);
-            alert("Error al copiar link");
+            toast.error("Error al copiar link");
         }
     };
 }

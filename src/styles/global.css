@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Modal and Dialog Backdrops */
+@layer components {
+
+    .modal-backdrop,
+    ui-confirm-dialog,
+    ui-alert-dialog {
+        background: radial-gradient(circle at center,
+                rgba(0, 0, 0, 0.85) 0%,
+                rgba(0, 0, 0, 0.95) 100%);
+        backdrop-filter: blur(8px);
+    }
+
+    /* Ensure smooth transitions */
+    .modal-content,
+    .confirm-content,
+    .alert-content,
+    .toast-item {
+        will-change: transform, opacity;
+    }
+
+    /* Focus styles for accessibility */
+    ui-modal:focus,
+    ui-confirm-dialog:focus,
+    ui-alert-dialog:focus {
+        outline: none;
+    }
+}

@@ -102,29 +102,45 @@ export class ClientService {
             .select("*")
             .eq("client_id", clientId);
 
-        // Get answers with questions
+        // Get answers
         const { data: answers } = await supabase
             .from("client_answers")
-            .select(`
-        *,
-        questions (
-          question_text,
-          order_index
-        )
-      `)
+            .select("*")
             .eq("client_id", clientId);
 
-        // Sort answers by question order
-        const sortedAnswers = answers?.sort((a: any, b: any) => {
-            const orderA = a.questions?.order_index || 0;
-            const orderB = b.questions?.order_index || 0;
-            return orderA - orderB;
-        }) || [];
+        // Get associated questions for the answers
+        if (answers && answers.length > 0) {
+            const questionIds = answers.map((a: any) => a.question_id);
+            const { data: questionsData } = await supabase
+                .from("questions")
+                .select("id, question_text, order_index")
+                .in("id", questionIds);
+
+            // Merge questions into answers
+            const questionsMap = new Map(questionsData?.map((q: any) => [q.id, q]) || []);
+            const answersWithQuestions = answers.map((answer: any) => ({
+                ...answer,
+                questions: questionsMap.get(answer.question_id),
+            }));
+
+            // Sort answers by question order
+            const sortedAnswers = answersWithQuestions.sort((a: any, b: any) => {
+                const orderA = a.questions?.order_index || 0;
+                const orderB = b.questions?.order_index || 0;
+                return orderA - orderB;
+            });
+
+            return {
+                client,
+                documents: documents || [],
+                answers: sortedAnswers,
+            };
+        }
 
         return {
             client,
             documents: documents || [],
-            answers: sortedAnswers,
+            answers: [],
         };
     }
 }

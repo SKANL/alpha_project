@@ -1,4 +1,5 @@
 import { TemplatesApi } from "@/lib/api/templates";
+import { toast } from "@/components/interactive/UiToast";
 
 export class QuestionnaireForm extends HTMLElement {
     private container: HTMLElement | null = null;
@@ -51,7 +52,7 @@ export class QuestionnaireForm extends HTMLElement {
                 }
                 window.location.reload();
             } catch (error) {
-                alert("Error al crear cuestionario");
+                toast.error("Error al crear cuestionario");
                 if (submitBtn) {
                     submitBtn.textContent = originalText || "GUARDAR";
                     (submitBtn as HTMLButtonElement).disabled = false;

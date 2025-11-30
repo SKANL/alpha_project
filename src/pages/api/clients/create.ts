@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { ClientService } from "../../../services/ClientService";
 import type { CreateClientDTO } from "../../../lib/types";
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, url }) => {
   const user = locals.user;
 
   if (!user) {
@@ -24,11 +24,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const newClient = await ClientService.createClient(user.id, clientData);
 
-    return new Response(JSON.stringify(newClient), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+    // Build complete magic link using the token
+    const origin = url.origin || `${url.protocol}//${url.host}`;
+    const magicLink = `${origin}/portal/${newClient.magic_link_token}`;
+
+    // Return client data with complete magic link
+    return new Response(
+      JSON.stringify({
+        ...newClient,
+        magic_link: magicLink,
+      }),
+      {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error: any) {
+    console.error("[API] Error creating client:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

@@ -1,3 +1,5 @@
+import { toast } from "@/components/interactive/UiToast";
+
 export class ContractForm extends HTMLElement {
     constructor() {
         super();
@@ -36,14 +38,14 @@ export class ContractForm extends HTMLElement {
                     }
                     window.location.reload();
                 } else {
-                    alert("Error al crear plantilla");
+                    toast.error("Error al crear plantilla");
                     if (submitBtn) {
                         submitBtn.textContent = originalText || "GUARDAR";
                         (submitBtn as HTMLButtonElement).disabled = false;
                     }
                 }
             } catch (error) {
-                alert("Error al crear plantilla");
+                toast.error("Error al crear plantilla");
                 if (submitBtn) {
                     submitBtn.textContent = originalText || "GUARDAR";
                     (submitBtn as HTMLButtonElement).disabled = false;

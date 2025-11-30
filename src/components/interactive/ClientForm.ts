@@ -1,5 +1,6 @@
 import { ClientsApi } from "@/lib/api/clients";
 import type { CreateClientDTO } from "@/lib/types";
+import { toast } from "@/components/interactive/UiToast";
 
 export class ClientForm extends HTMLElement {
     constructor() {
@@ -43,13 +44,20 @@ export class ClientForm extends HTMLElement {
                     magicLinkEl.textContent = result.magic_link;
                 }
 
-                // Dispatch event to open modal
-                window.dispatchEvent(new CustomEvent("toggle-modal-linkModal"));
+                // Make sure modal exists before trying to toggle it
+                const modal = document.querySelector("#linkModal");
+                if (modal) {
+                    // Dispatch event to open modal
+                    window.dispatchEvent(new CustomEvent("toggle-modal-linkModal"));
+                } else {
+                    console.error("Modal #linkModal not found");
+                    toast.success("Sala de bienveni da creada exitosamente");
+                }
 
                 // Reset form
                 form.reset();
             } catch (error: any) {
-                alert("Error: " + (error.message || "Error al crear la sala de bienvenida"));
+                toast.error(error.message || "Error al crear la sala de bienvenida");
             } finally {
                 if (submitBtn) {
                     submitBtn.textContent = originalBtnText || "GENERAR LINK MÁGICO";
@@ -58,16 +66,27 @@ export class ClientForm extends HTMLElement {
             }
         });
 
-        copyBtn?.addEventListener("click", () => {
+        copyBtn?.addEventListener("click", async () => {
             const link = magicLinkEl?.textContent || "";
-            navigator.clipboard.writeText(link);
 
-            const originalText = copyBtn.textContent;
-            copyBtn.textContent = "COPIADO";
+            if (!link) {
+                toast.error("No hay link para copiar");
+                return;
+            }
 
-            setTimeout(() => {
-                copyBtn.textContent = originalText;
-            }, 2000);
+            try {
+                await navigator.clipboard.writeText(link);
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = "COPIADO";
+                toast.success("Link copiado al portapapeles");
+
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                console.error("Error copying to clipboard:", err);
+                toast.error("Error al copiar al portapapeles");
+            }
         });
     }
 }

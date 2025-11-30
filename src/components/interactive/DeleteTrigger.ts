@@ -1,4 +1,6 @@
 import { apiClient } from "@/lib/api/core";
+import { showConfirm } from "@/lib/ui/dialog-utils";
+import { toast } from "@/components/interactive/UiToast";
 
 export class DeleteTrigger extends HTMLElement {
     constructor() {
@@ -22,7 +24,14 @@ export class DeleteTrigger extends HTMLElement {
             return;
         }
 
-        if (!confirm(confirmMsg)) return;
+        const confirmed = await showConfirm(confirmMsg, {
+            title: "Confirmar eliminación",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            type: "danger",
+        });
+
+        if (!confirmed) return;
 
         const originalText = this.textContent;
         this.textContent = "Eliminando...";
@@ -35,7 +44,7 @@ export class DeleteTrigger extends HTMLElement {
             });
             window.location.reload();
         } catch (error) {
-            alert("Error al eliminar");
+            toast.error("Error al eliminar");
             this.textContent = originalText;
             this.style.pointerEvents = "auto";
         }

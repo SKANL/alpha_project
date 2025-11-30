@@ -1,4 +1,5 @@
 import { PortalApi } from "@/lib/api/portal";
+import { toast } from "@/components/interactive/UiToast";
 
 export class PortalFlow extends HTMLElement {
     private currentStepIndex: number = 0;
@@ -60,7 +61,7 @@ export class PortalFlow extends HTMLElement {
                 await PortalApi.submitQuestionnaire(this.token, answers);
                 this.advanceStep();
             } catch (e) {
-                alert("Error al enviar respuestas");
+                toast.error("Error al enviar respuestas");
                 if (btn) btn.textContent = "ENVIAR RESPUESTAS";
             }
         });
@@ -94,7 +95,7 @@ export class PortalFlow extends HTMLElement {
                         await this.completePortalProcess();
                     }
                 } catch (error) {
-                    alert(`Error al subir ${document_type}`);
+                    toast.error(`Error al subir ${document_type}`);
                 }
             });
         });
@@ -103,7 +104,7 @@ export class PortalFlow extends HTMLElement {
         this.querySelector("#continueDocsBtn")?.addEventListener("click", async () => {
             // Check if all documents uploaded before allowing continue
             if (this.uploadedDocuments.size < this.requiredDocuments.length) {
-                alert(`Por favor sube todos los ${this.requiredDocuments.length} documentos requeridos`);
+                toast.warning(`Por favor sube todos los ${this.requiredDocuments.length} documentos requeridos`);
                 return;
             }
             this.advanceStep();

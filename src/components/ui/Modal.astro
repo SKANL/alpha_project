@@ -9,21 +9,31 @@ const { id, title } = Astro.props;
 
 <ui-modal
     id={id}
-    class="fixed inset-0 z-50 hidden items-center justify-center bg-surface-base/90 backdrop-blur-sm transition-all duration-300"
+    class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4 transition-all duration-300"
     role="dialog"
     aria-modal="true"
     aria-labelledby={`${id}-title`}
 >
     <div
-        class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-surface-card border border-border p-8 shadow-2xl transition-all animate-fade-in-up"
+        class="modal-content relative w-full max-w-lg transform overflow-hidden rounded-2xl bg-gradient-to-br from-surface-floating to-surface-card border border-border-strong shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.05)] backdrop-blur-xl p-8 transition-all"
+        style="background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%); backdrop-filter: blur(20px);"
     >
+        <!-- Decorative border glow -->
+        <div
+            class="absolute inset-0 rounded-2xl bg-gradient-to-br from-brand/10 via-transparent to-transparent pointer-events-none"
+        >
+        </div>
+
         <h2
             id={`${id}-title`}
-            class="text-xl font-light tracking-zen text-content-primary mb-6"
+            class="relative text-2xl font-light tracking-zen text-content-primary mb-6 flex items-center gap-3"
         >
             {title}
         </h2>
-        <slot />
+
+        <div class="relative">
+            <slot />
+        </div>
     </div>
 </ui-modal>
 

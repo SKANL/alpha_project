@@ -31,18 +31,27 @@ export class PortalService {
             .single();
 
         // Get questionnaire with questions
-        const { data: questionnaire } = await supabase
+        const { data: questionnaireData, error: questionnaireError } = await supabase
             .from("questionnaire_templates")
-            .select(`
-        *,
-        questions (
-          id,
-          question_text,
-          order_index
-        )
-      `)
+            .select("*")
             .eq("id", client.questionnaire_template_id)
             .single();
+
+        if (questionnaireError) {
+            throw new Error(questionnaireError.message);
+        }
+
+        // Get questions separately to avoid complex syntax
+        const { data: questions } = await supabase
+            .from("questions")
+            .select("id, question_text, order_index")
+            .eq("questionnaire_template_id", client.questionnaire_template_id)
+            .order("order_index", { ascending: true });
+
+        const questionnaire = {
+            ...questionnaireData,
+            questions: questions || [],
+        };
 
         // Get profile
         const { data: profile } = await supabase

@@ -1,4 +1,5 @@
 import { ProfileApi } from "@/lib/api/profile";
+import { toast } from "@/components/interactive/UiToast";
 
 export class ProfileForm extends HTMLElement {
     constructor() {
@@ -48,8 +49,11 @@ export class ProfileForm extends HTMLElement {
                     }, 3000);
                 }
 
+                // Show success toast
+                toast.success("Perfil actualizado correctamente");
+
             } catch (error) {
-                alert("Error al guardar el perfil");
+                toast.error("Error al guardar el perfil");
             } finally {
                 if (submitBtn) {
                     submitBtn.textContent = originalText || "GUARDAR CAMBIOS";

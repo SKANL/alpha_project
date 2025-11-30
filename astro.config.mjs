@@ -19,7 +19,10 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: []
+    plugins: [],
+    optimizeDeps: {
+      include: ["picocolors"],
+    },
   },
 
   integrations: [tailwind()]
