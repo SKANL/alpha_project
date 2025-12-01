@@ -1,0 +1,126 @@
+---
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+
+const { user } = Astro.locals;
+
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+
+const url = new URL(Astro.request.url);
+const plan = url.searchParams.get('plan') || 'firma';
+const price = url.searchParams.get('price') || '7999';
+const amount = Number(price);
+const amountStr = isFinite(amount) ? amount.toFixed(2) : '7999.00';
+
+// PayPal Sandbox client id (provided)
+const PAYPAL_SANDBOX_CLIENT_ID = 'Ab6xDxKjzq0DrVOYM6DaMXoNKTzvq4Wt2W8zH5PZW5Gtnlzl6KNsez1vLtlU2rFZypH0P21Sj6WwnUsE';
+---
+
+<Layout title="Checkout Membresía">
+  <Navigation currentPage="membresias" />
+
+  <main class="flex-1 ml-60 p-16 max-w-4xl">
+    <PageHeader title="Selecciona método de pago" subtitle={`Plan: ${plan} — ${amountStr} MXN/mes`} />
+
+    <section class="mt-8">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="p-6 bg-white border border-border rounded-md flex flex-col items-center justify-center">
+          <h3 class="mb-4 text-lg font-medium">PayPal (Sandbox)</h3>
+          <p class="text-sm text-content-muted mb-4 text-center">Paga con PayPal en modo Sandbox.</p>
+          <button id="btn-paypal" class="w-full inline-flex items-center justify-center px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded-md">Pagar con PayPal</button>
+        </div>
+
+        <div class="p-6 bg-white border border-border rounded-md flex flex-col items-center justify-center">
+          <h3 class="mb-4 text-lg font-medium">Mercado Pago</h3>
+          <p class="text-sm text-content-muted mb-4 text-center">Redirigir a Mercado Pago / integración pendiente.</p>
+          <a class="w-full inline-flex items-center justify-center px-4 py-3 bg-surface-card border border-border rounded-md hover:bg-surface-muted" href="#" id="btn-mercadopago">Pagar con Mercado Pago</a>
+        </div>
+      </div>
+
+      <div id="paypal-container" class="mt-8" style="display:none;">
+        <h4 class="mb-4">Completa el pago con PayPal</h4>
+        <div id="paypal-button-container"></div>
+        <div id="paypal-status" class="mt-4 text-sm"></div>
+      </div>
+
+      <div class="mt-8 text-xs text-content-muted">
+        <strong>Credenciales Sandbox (si necesitas probar login):</strong>
+        <ul class="list-disc ml-5 mt-2">
+          <li>Cuenta Business: <code>sb-2kw1o32355044@business.example.com</code></li>
+          <li>Contraseña: <code>Z'1vA%q2</code></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Cargar SDK de PayPal directamente con client-id correcto -->
+    <script src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_SANDBOX_CLIENT_ID}&currency=MXN`}></script>
+
+    <script define:vars={{ amountStr }}>
+      const amount = amountStr;
+
+      function ensurePaypalLoaded() {
+        if (window.paypal) return Promise.resolve(window.paypal);
+        return new Promise((resolve, reject) => {
+          const check = () => {
+            if (window.paypal) return resolve(window.paypal);
+            setTimeout(() => check(), 50);
+          };
+          check();
+          // Fallback timeout
+          setTimeout(() => reject(new Error('PayPal SDK no disponible')), 8000);
+        });
+      }
+
+      document.getElementById('btn-paypal').addEventListener('click', async (e) => {
+        e.preventDefault();
+        document.getElementById('paypal-container').style.display = 'block';
+        document.getElementById('btn-paypal').disabled = true;
+
+        try {
+          const paypal = await ensurePaypalLoaded();
+
+          paypal.Buttons({
+            createOrder: function(data, actions) {
+              // Pedir al servidor que cree la orden de forma segura
+              return fetch('/api/paypal/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount })
+              })
+                .then(res => res.json())
+                .then(data => data.id);
+            },
+            onApprove: function(data) {
+              // Capturar en el servidor
+              return fetch('/api/paypal/capture-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderID: data.orderID })
+              })
+                .then(res => res.json())
+                .then(details => {
+                  document.getElementById('paypal-status').innerText = `Pago completado. ID de orden: ${details.id || details.purchase_units?.[0]?.payments?.captures?.[0]?.id}`;
+                });
+            },
+            onError: function(err) {
+              document.getElementById('paypal-status').innerText = 'Ocurrió un error procesando el pago.';
+              console.error(err);
+            }
+          }).render('#paypal-button-container');
+
+        } catch (err) {
+          document.getElementById('paypal-status').innerText = 'No se pudo cargar la SDK de PayPal.';
+          console.error(err);
+        }
+      });
+
+      document.getElementById('btn-mercadopago').addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Integración de Mercado Pago aún no implementada.');
+      });
+    </script>
+  </main>
+</Layout>
