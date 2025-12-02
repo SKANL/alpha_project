@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 import { ClientService } from "../../../services/ClientService";
 import type { CreateClientDTO } from "../../../lib/types";
+import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
-export const POST: APIRoute = async ({ request, locals, url }) => {
-  const user = locals.user;
+export const POST: APIRoute = async ({ request, locals, url, cookies }) => {
+  const { supabase, user } = await createSupabaseServerClient({ cookies });
 
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -22,7 +23,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       required_documents: data.required_documents || [],
     };
 
-    const newClient = await ClientService.createClient(user.id, clientData);
+    const newClient = await ClientService.createClient(supabase, user.id, clientData);
 
     // Build complete magic link using the token
     const origin = url.origin || `${url.protocol}//${url.host}`;

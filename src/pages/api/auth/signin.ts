@@ -2,8 +2,9 @@
 // export const prerender = false;
 import type { APIRoute } from "astro";
 import { AuthService } from "../../../services/AuthService";
+import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, redirect, cookies }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
@@ -12,21 +13,27 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return new Response("Email and password are required", { status: 400 });
   }
 
-  const { data, error } = await AuthService.signIn(email, password);
+  // Create a fresh client for the request
+  const { supabase } = await createSupabaseServerClient({ cookies });
 
-  if (error || !data.session) {
-    return new Response(JSON.stringify({ error: error?.message || "No session created" }), {
-      status: 500,
+  const { data, error } = await AuthService.signIn(supabase, email, password);
+
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 401,
       headers: { "Content-Type": "application/json" }
     });
   }
 
-  const { access_token, refresh_token } = data.session;
-  cookies.set("sb-access-token", access_token, {
-    path: "/",
-  });
-  cookies.set("sb-refresh-token", refresh_token, {
-    path: "/",
-  });
+  // Set cookies from the session data
+  if (data.session) {
+    cookies.set("sb-access-token", data.session.access_token, {
+      path: "/",
+    });
+    cookies.set("sb-refresh-token", data.session.refresh_token, {
+      path: "/",
+    });
+  }
+
   return redirect("/dashboard");
 };

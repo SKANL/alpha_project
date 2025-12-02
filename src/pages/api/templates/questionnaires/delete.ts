@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { TemplateService } from "../../../../services/TemplateService";
+import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
-export const DELETE: APIRoute = async ({ request, locals }) => {
-  const user = locals.user;
+export const DELETE: APIRoute = async ({ request, locals, cookies }) => {
+  const { supabase, user } = await createSupabaseServerClient({ cookies });
 
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -20,7 +21,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    await TemplateService.deleteQuestionnaireTemplate(id, user.id);
+    await TemplateService.deleteQuestionnaireTemplate(supabase, id, user.id);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

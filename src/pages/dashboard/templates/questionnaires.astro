@@ -8,13 +8,20 @@ import Input from "@/components/ui/Input.astro";
 import { TemplateService } from "@/services/TemplateService";
 import type { QuestionnaireTemplate } from "@/lib/types";
 
-const { user } = Astro.locals;
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+
+const { supabase, user } = await createSupabaseServerClient({
+  cookies: Astro.cookies,
+});
 
 if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-const questionnaires = await TemplateService.getQuestionnaireTemplates(user.id);
+const questionnaires = await TemplateService.getQuestionnaireTemplates(
+  supabase,
+  user.id,
+);
 ---
 
 <Layout title="Plantillas de Cuestionarios">

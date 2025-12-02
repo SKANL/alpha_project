@@ -6,14 +6,17 @@ import Button from "@/components/ui/Button.astro";
 import Table from "@/components/ui/Table.astro";
 import Badge from "@/components/ui/Badge.astro";
 import { ClientService } from "@/services/ClientService";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
-const { user } = Astro.locals;
+const { supabase, user } = await createSupabaseServerClient({
+  cookies: Astro.cookies,
+});
 
 if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-const clients = await ClientService.getClients(user.id);
+const clients = await ClientService.getClients(supabase, user.id);
 ---
 
 <Layout title="Clientes">

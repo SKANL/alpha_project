@@ -8,13 +8,17 @@ import type { ContractTemplate } from "@/lib/types";
 import Input from "@/components/ui/Input.astro";
 import { TemplateService } from "@/services/TemplateService";
 
-const { user } = Astro.locals;
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+
+const { supabase, user } = await createSupabaseServerClient({
+  cookies: Astro.cookies,
+});
 
 if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
-const contracts = await TemplateService.getContractTemplates(user.id);
+const contracts = await TemplateService.getContractTemplates(supabase, user.id);
 ---
 
 <Layout title="Plantillas de Contratos">

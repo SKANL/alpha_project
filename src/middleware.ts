@@ -1,79 +1,52 @@
 import { defineMiddleware } from "astro:middleware";
-import { supabase } from "./lib/supabase";
+import { createSupabaseServerClient } from "./lib/supabase-server";
 
 export const onRequest = defineMiddleware(async (context, next) => {
-    const accessToken = context.cookies.get("sb-access-token");
-    const refreshToken = context.cookies.get("sb-refresh-token");
-
-    const { url, locals, redirect } = context;
+    const { url, locals, redirect, cookies } = context;
 
     // Paths that don't require authentication
     const publicPaths = ["/auth/signin", "/auth/register", "/api/auth", "/portal"];
     const isPublic = publicPaths.some((path) => url.pathname.startsWith(path)) || url.pathname === "/";
 
     // Debug logging (optionally enable via env var)
-    // In SSR, use process.env instead of import.meta.env
     const DEBUG_AUTH = process.env.DEBUG_AUTH === "true";
-    if (DEBUG_AUTH) {
-        console.log(`[Auth] Path: ${url.pathname}, isPublic: ${isPublic}, hasTokens: ${!!accessToken && !!refreshToken}`);
-    }
-
-    if (!accessToken || !refreshToken) {
-        if (!isPublic) {
-            if (DEBUG_AUTH) {
-                console.log(`[Auth] Redirecting to signin (missing tokens)`);
-            }
-            return redirect("/auth/signin");
-        }
-        return next();
-    }
 
     try {
-        const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken.value,
-            refresh_token: refreshToken.value,
-        });
+        // Create a safe, request-scoped Supabase client
+        const { supabase, user, session } = await createSupabaseServerClient({ cookies });
 
-        if (error || !data.user) {
-            // Clear invalid cookies
-            context.cookies.delete("sb-access-token", { path: "/" });
-            context.cookies.delete("sb-refresh-token", { path: "/" });
-
-            if (DEBUG_AUTH) {
-                console.log(`[Auth] Invalid session:`, error?.message || "No user");
-            }
-
-            if (!isPublic) {
-                return redirect("/auth/signin");
-            }
-            return next();
-        }
-
-        // Inject user and session into locals for global access
-        locals.user = data.user;
-        locals.session = data.session;
+        // Inject into locals
+        locals.user = user;
+        locals.session = session;
+        // We could also inject the client if we wanted to avoid recreating it, 
+        // but for now we'll just use the user/session in locals and recreate client in pages/api if needed
+        // or we could add 'supabase' to locals if we updated env.d.ts. 
+        // For this refactor, we will recreate it in pages to be explicit, or we can add it to locals.
+        // Let's stick to just user/session in locals for now to match existing types.
 
         if (DEBUG_AUTH) {
-            console.log(`[Auth] Valid session for user: ${data.user.id}`);
+            console.log(`[Auth] Path: ${url.pathname}, isPublic: ${isPublic}, User: ${user?.id}`);
         }
 
-        // Redirect authenticated users away from auth pages
-        if (url.pathname === "/auth/signin" || url.pathname === "/auth/register") {
-            if (DEBUG_AUTH) {
-                console.log(`[Auth] Redirecting authenticated user to dashboard`);
+        if (!user) {
+            if (!isPublic) {
+                if (DEBUG_AUTH) console.log(`[Auth] Redirecting to signin (no user)`);
+                return redirect("/auth/signin");
             }
-            return redirect("/dashboard");
+        } else {
+            // Redirect authenticated users away from auth pages
+            if (url.pathname === "/auth/signin" || url.pathname === "/auth/register") {
+                if (DEBUG_AUTH) console.log(`[Auth] Redirecting authenticated user to dashboard`);
+                return redirect("/dashboard");
+            }
         }
 
         return next();
+
     } catch (err) {
-        // Catch any unexpected errors
         console.error("[Auth] Unexpected error in middleware:", err);
 
-        // Clear cookies on error
-        context.cookies.delete("sb-access-token", { path: "/" });
-        context.cookies.delete("sb-refresh-token", { path: "/" });
-
+        // Clear cookies on error if it seems like a session issue
         if (!isPublic) {
             return redirect("/auth/signin");
         }

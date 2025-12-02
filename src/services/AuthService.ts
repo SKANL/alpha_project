@@ -1,12 +1,11 @@
-import { supabase } from "../lib/supabase";
-import type { AuthResponse, Session } from "@supabase/supabase-js";
+import type { SupabaseClient, AuthResponse, Session } from "@supabase/supabase-js";
 
 export class AuthService {
     /**
      * Sign in with email and password.
      */
-    static async signIn(email: string, password: string): Promise<AuthResponse> {
-        return await supabase.auth.signInWithPassword({
+    static async signIn(client: SupabaseClient, email: string, password: string): Promise<AuthResponse> {
+        return await client.auth.signInWithPassword({
             email,
             password,
         });
@@ -15,8 +14,8 @@ export class AuthService {
     /**
      * Sign up with email and password.
      */
-    static async signUp(email: string, password: string): Promise<AuthResponse> {
-        return await supabase.auth.signUp({
+    static async signUp(client: SupabaseClient, email: string, password: string): Promise<AuthResponse> {
+        return await client.auth.signUp({
             email,
             password,
         });
@@ -25,15 +24,15 @@ export class AuthService {
     /**
      * Sign out the current user.
      */
-    static async signOut(): Promise<{ error: any }> {
-        return await supabase.auth.signOut();
+    static async signOut(client: SupabaseClient): Promise<{ error: any }> {
+        return await client.auth.signOut();
     }
 
     /**
      * Set the session using access and refresh tokens.
      */
-    static async setSession(accessToken: string, refreshToken: string): Promise<{ data: { session: Session | null; user: any | null }; error: any }> {
-        return await supabase.auth.setSession({
+    static async setSession(client: SupabaseClient, accessToken: string, refreshToken: string): Promise<{ data: { session: Session | null; user: any | null }; error: any }> {
+        return await client.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
         });

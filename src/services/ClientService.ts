@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 import type { Client, CreateClientDTO } from "../lib/types";
 
@@ -6,8 +6,8 @@ export class ClientService {
     /**
      * Fetch all clients for a specific user.
      */
-    static async getClients(userId: string): Promise<Client[]> {
-        const { data, error } = await supabase
+    static async getClients(client: SupabaseClient, userId: string): Promise<Client[]> {
+        const { data, error } = await client
             .from("clients")
             .select("*")
             .eq("user_id", userId)
@@ -24,8 +24,8 @@ export class ClientService {
     /**
      * Get a single client by ID.
      */
-    static async getClientById(clientId: string, userId: string): Promise<Client | null> {
-        const { data, error } = await supabase
+    static async getClientById(client: SupabaseClient, clientId: string, userId: string): Promise<Client | null> {
+        const { data, error } = await client
             .from("clients")
             .select("*")
             .eq("id", clientId)
@@ -43,11 +43,11 @@ export class ClientService {
     /**
      * Create a new client.
      */
-    static async createClient(userId: string, clientData: CreateClientDTO): Promise<Client> {
+    static async createClient(client: SupabaseClient, userId: string, clientData: CreateClientDTO): Promise<Client> {
         // Generate a unique magic link token (simple implementation)
         const magicLinkToken = crypto.randomUUID();
 
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from("clients")
             .insert({
                 user_id: userId,
@@ -69,8 +69,8 @@ export class ClientService {
     /**
      * Delete a client.
      */
-    static async deleteClient(clientId: string, userId: string): Promise<void> {
-        const { error } = await supabase
+    static async deleteClient(client: SupabaseClient, clientId: string, userId: string): Promise<void> {
+        const { error } = await client
             .from("clients")
             .delete()
             .eq("id", clientId)
@@ -84,63 +84,43 @@ export class ClientService {
 
     /**
      * Get full client expediente (details, documents, answers).
+     * Optimized to use parallel requests and joins.
      */
-    static async getClientExpediente(clientId: string, userId: string) {
-        // Get client
-        const { data: client, error: clientError } = await supabase
-            .from("clients")
-            .select("*")
-            .eq("id", clientId)
-            .eq("user_id", userId)
-            .single();
+    static async getClientExpediente(client: SupabaseClient, clientId: string, userId: string) {
+        // Fetch client, documents, and answers (with nested questions) in parallel
+        const [clientResult, documentsResult, answersResult] = await Promise.all([
+            client
+                .from("clients")
+                .select("*")
+                .eq("id", clientId)
+                .eq("user_id", userId)
+                .single(),
+            client
+                .from("client_documents")
+                .select("*")
+                .eq("client_id", clientId),
+            client
+                .from("client_answers")
+                .select("*, questions(*)") // Join with questions table
+                .eq("client_id", clientId)
+        ]);
 
-        if (clientError) throw new Error(clientError.message);
+        if (clientResult.error) throw new Error(clientResult.error.message);
 
-        // Get documents
-        const { data: documents } = await supabase
-            .from("client_documents")
-            .select("*")
-            .eq("client_id", clientId);
+        const documents = documentsResult.data || [];
+        const answers = answersResult.data || [];
 
-        // Get answers
-        const { data: answers } = await supabase
-            .from("client_answers")
-            .select("*")
-            .eq("client_id", clientId);
-
-        // Get associated questions for the answers
-        if (answers && answers.length > 0) {
-            const questionIds = answers.map((a: any) => a.question_id);
-            const { data: questionsData } = await supabase
-                .from("questions")
-                .select("id, question_text, order_index")
-                .in("id", questionIds);
-
-            // Merge questions into answers
-            const questionsMap = new Map(questionsData?.map((q: any) => [q.id, q]) || []);
-            const answersWithQuestions = answers.map((answer: any) => ({
-                ...answer,
-                questions: questionsMap.get(answer.question_id),
-            }));
-
-            // Sort answers by question order
-            const sortedAnswers = answersWithQuestions.sort((a: any, b: any) => {
-                const orderA = a.questions?.order_index || 0;
-                const orderB = b.questions?.order_index || 0;
-                return orderA - orderB;
-            });
-
-            return {
-                client,
-                documents: documents || [],
-                answers: sortedAnswers,
-            };
-        }
+        // Sort answers by question order (if available from the join)
+        const sortedAnswers = answers.sort((a: any, b: any) => {
+            const orderA = a.questions?.order_index || 0;
+            const orderB = b.questions?.order_index || 0;
+            return orderA - orderB;
+        });
 
         return {
-            client,
-            documents: documents || [],
-            answers: [],
+            client: clientResult.data,
+            documents: documents,
+            answers: sortedAnswers,
         };
     }
 }

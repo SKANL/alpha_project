@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { ClientService } from "../../../../services/ClientService";
+import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
-export const GET: APIRoute = async ({ params, locals }) => {
-  const user = locals.user;
+export const GET: APIRoute = async ({ params, locals, cookies }) => {
+  const { supabase, user } = await createSupabaseServerClient({ cookies });
 
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -21,7 +22,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
   }
 
   try {
-    const expediente = await ClientService.getClientExpediente(clientId, user.id);
+    const expediente = await ClientService.getClientExpediente(supabase, clientId, user.id);
     return new Response(JSON.stringify(expediente), {
       status: 200,
       headers: { "Content-Type": "application/json" },

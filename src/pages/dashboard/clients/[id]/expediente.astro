@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Dashboard.astro";
 import Navigation from "@/components/Navigation.astro";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import Button from "@/components/ui/Button.astro";
 import PageHeader from "@/components/ui/PageHeader.astro";
 import Tabs from "@/components/ui/Tabs.astro";
@@ -9,20 +9,14 @@ import TabTrigger from "@/components/ui/TabTrigger.astro";
 import TabContent from "@/components/ui/TabContent.astro";
 import Card from "@/components/ui/Card.astro";
 import type { ClientDocument, ClientAnswer, Question } from "@/lib/types";
+import { Image } from "astro:assets";
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
-
-if (!accessToken || !refreshToken) {
-  return Astro.redirect("/auth/signin");
-}
-
-const session = await supabase.auth.setSession({
-  refresh_token: refreshToken.value,
-  access_token: accessToken.value,
+// Create request-scoped Supabase client
+const { supabase, user } = await createSupabaseServerClient({
+  cookies: Astro.cookies,
 });
 
-if (session.error || !session.data.user) {
+if (!user) {
   return Astro.redirect("/auth/signin");
 }
 
@@ -32,24 +26,18 @@ if (!clientId) {
   return Astro.redirect("/dashboard/clients");
 }
 
-const user = session.data.user;
-
-// Get expediente data using API
-const expedienteResponse = await fetch(
-  `${Astro.url.origin}/api/clients/${clientId}/expediente`,
-  {
-    method: "GET",
-    headers: {
-      Cookie: `sb-access-token=${accessToken.value}; sb-refresh-token=${refreshToken.value}`,
-    },
-  },
+// Get expediente data directly from service (no loopback request)
+import { ClientService } from "@/services/ClientService";
+const expedienteData = await ClientService.getClientExpediente(
+  supabase,
+  clientId,
+  user.id,
 );
 
-if (!expedienteResponse.ok) {
+if (!expedienteData || !expedienteData.client) {
   return Astro.redirect("/dashboard/clients");
 }
 
-const expedienteData = await expedienteResponse.json();
 const client = expedienteData.client;
 const documents = expedienteData.documents;
 const answers = expedienteData.answers;
@@ -64,6 +52,7 @@ const answers = expedienteData.answers;
         href="/dashboard/clients"
         variant="ghost"
         class="pl-0 hover:pl-2 transition-all"
+        data-astro-prefetch
       >
         ← Volver a Clientes
       </Button>
@@ -97,9 +86,11 @@ const answers = expedienteData.answers;
                         Firma Digital
                       </h3>
                       <div class="bg-white p-8 rounded border border-border inline-block">
-                        <img
+                        <Image
                           src={client.signature_data}
                           alt="Firma"
+                          width={300}
+                          height={150}
                           class="max-w-[300px]"
                         />
                       </div>

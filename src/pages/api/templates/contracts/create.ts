@@ -1,8 +1,9 @@
 import type { APIRoute } from "astro";
 import { TemplateService } from "../../../../services/TemplateService";
+import { createSupabaseServerClient } from "../../../../lib/supabase-server";
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const user = locals.user;
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
+  const { supabase, user } = await createSupabaseServerClient({ cookies });
 
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -23,7 +24,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const template = await TemplateService.createContractTemplate(user.id, name, file);
+    const template = await TemplateService.createContractTemplate(supabase, user.id, name, file);
 
     return new Response(JSON.stringify(template), {
       status: 201,

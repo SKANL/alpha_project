@@ -1,12 +1,12 @@
-import { supabase } from "../lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Profile, UpdateProfileDTO } from "../lib/types";
 
 export class ProfileService {
     /**
      * Get profile by user ID.
      */
-    static async getProfile(userId: string): Promise<Profile | null> {
-        const { data, error } = await supabase
+    static async getProfile(client: SupabaseClient, userId: string): Promise<Profile | null> {
+        const { data, error } = await client
             .from("profiles")
             .select("*")
             .eq("user_id", userId)
@@ -23,8 +23,8 @@ export class ProfileService {
     /**
      * Update profile.
      */
-    static async updateProfile(userId: string, profileData: UpdateProfileDTO): Promise<Profile> {
-        const { data, error } = await supabase
+    static async updateProfile(client: SupabaseClient, userId: string, profileData: UpdateProfileDTO): Promise<Profile> {
+        const { data, error } = await client
             .from("profiles")
             .update(profileData)
             .eq("user_id", userId)

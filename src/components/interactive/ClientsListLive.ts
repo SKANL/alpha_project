@@ -37,9 +37,22 @@ export class ClientsListLive extends HTMLElement {
         const eventType = payload.eventType;
 
         if (eventType === 'INSERT') {
-            // New client created - reload page to show it
+            // New client created - append to table dynamically
+            const client = payload.new;
+            this.appendClientRow(client);
             this.showToast("Nuevo cliente agregado", "success");
-            setTimeout(() => window.location.reload(), 2000);
+
+            // Remove "No clients" message if it exists
+            const noClientsMsg = document.querySelector('.py-24.text-center');
+            if (noClientsMsg) {
+                noClientsMsg.remove();
+                // If table doesn't exist, we might need to reload or handle it, 
+                // but for now let's assume the table structure exists or we reload if it's the FIRST client
+                if (!document.querySelector('table')) {
+                    window.location.reload();
+                    return;
+                }
+            }
         }
         else if (eventType === 'UPDATE') {
             const client = payload.new;
@@ -122,6 +135,52 @@ export class ClientsListLive extends HTMLElement {
             case 'info': return 'ℹ';
             default: return '•';
         }
+    }
+
+    private appendClientRow(client: any) {
+        const tbody = document.querySelector('tbody');
+        if (!tbody) return;
+
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-client-id', client.id);
+        tr.className = 'animate-slide-in-bottom'; // Add animation class if available
+
+        const createdDate = new Date(client.created_at).toLocaleDateString("es-ES");
+
+        tr.innerHTML = `
+            <td class="font-medium text-content-primary">
+                ${client.client_name}
+            </td>
+            <td>${client.case_name}</td>
+            <td>
+                <span class="status-badge inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider border bg-status-warning/10 text-status-warning border-status-warning/20">
+                    PENDIENTE
+                </span>
+            </td>
+            <td>
+                ${createdDate}
+            </td>
+            <td>
+                <div class="flex items-center justify-end gap-4">
+                    <copy-link
+                        class="text-xs font-light text-brand hover:text-brand-hover transition-colors cursor-pointer"
+                        data-token="${client.magic_link_token}"
+                    >
+                        COPIAR LINK
+                    </copy-link>
+                    <delete-trigger
+                        class="text-xs font-light text-content-muted hover:text-status-error transition-colors cursor-pointer"
+                        data-id="${client.id}"
+                        data-action="/api/clients/delete"
+                        data-confirm="¿Estás seguro de eliminar el expediente de ${client.client_name}? Esta acción no se puede deshacer."
+                    >
+                        ELIMINAR
+                    </delete-trigger>
+                </div>
+            </td>
+        `;
+
+        tbody.insertBefore(tr, tbody.firstChild);
     }
 
     disconnectedCallback() {

@@ -1,9 +1,9 @@
 import type { APIRoute } from "astro";
 import { ProfileService } from "../../../services/ProfileService";
-import { supabase } from "../../../lib/supabase";
+import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const user = locals.user;
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
+  const { supabase, user } = await createSupabaseServerClient({ cookies });
 
   if (!user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       updateData.firm_logo_url = firm_logo_url;
     }
 
-    const updatedProfile = await ProfileService.updateProfile(user.id, updateData);
+    const updatedProfile = await ProfileService.updateProfile(supabase, user.id, updateData);
 
     return new Response(JSON.stringify(updatedProfile), {
       status: 200,

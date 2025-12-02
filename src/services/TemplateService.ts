@@ -1,12 +1,12 @@
-import { supabase } from "../lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContractTemplate, QuestionnaireTemplate } from "../lib/types";
 
 export class TemplateService {
     /**
      * Get all contract templates for a user.
      */
-    static async getContractTemplates(userId: string): Promise<ContractTemplate[]> {
-        const { data, error } = await supabase
+    static async getContractTemplates(client: SupabaseClient, userId: string): Promise<ContractTemplate[]> {
+        const { data, error } = await client
             .from("contract_templates")
             .select("*")
             .eq("user_id", userId)
@@ -23,8 +23,8 @@ export class TemplateService {
     /**
      * Get all questionnaire templates for a user.
      */
-    static async getQuestionnaireTemplates(userId: string): Promise<QuestionnaireTemplate[]> {
-        const { data, error } = await supabase
+    static async getQuestionnaireTemplates(client: SupabaseClient, userId: string): Promise<QuestionnaireTemplate[]> {
+        const { data, error } = await client
             .from("questionnaire_templates")
             .select("*")
             .eq("user_id", userId)
@@ -41,23 +41,23 @@ export class TemplateService {
     /**
      * Create a new contract template.
      */
-    static async createContractTemplate(userId: string, name: string, file: File): Promise<ContractTemplate> {
+    static async createContractTemplate(client: SupabaseClient, userId: string, name: string, file: File): Promise<ContractTemplate> {
         // Upload file
         const fileExt = file.name.split(".").pop();
         const fileName = `${userId}/${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await client.storage
             .from("contract-templates")
             .upload(filePath, file);
 
         if (uploadError) throw new Error(uploadError.message);
 
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = client.storage
             .from("contract-templates")
             .getPublicUrl(filePath);
 
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from("contract_templates")
             .insert({
                 user_id: userId,
@@ -75,8 +75,8 @@ export class TemplateService {
     /**
      * Delete a contract template.
      */
-    static async deleteContractTemplate(id: string, userId: string): Promise<void> {
-        const { error } = await supabase
+    static async deleteContractTemplate(client: SupabaseClient, id: string, userId: string): Promise<void> {
+        const { error } = await client
             .from("contract_templates")
             .delete()
             .eq("id", id)
@@ -88,9 +88,9 @@ export class TemplateService {
     /**
      * Create a new questionnaire template.
      */
-    static async createQuestionnaireTemplate(userId: string, name: string, questions: string[]): Promise<QuestionnaireTemplate> {
+    static async createQuestionnaireTemplate(client: SupabaseClient, userId: string, name: string, questions: string[]): Promise<QuestionnaireTemplate> {
         // Create template
-        const { data: template, error: templateError } = await supabase
+        const { data: template, error: templateError } = await client
             .from("questionnaire_templates")
             .insert({
                 user_id: userId,
@@ -109,7 +109,7 @@ export class TemplateService {
                 order_index: index,
             }));
 
-            const { error: questionsError } = await supabase
+            const { error: questionsError } = await client
                 .from("questions")
                 .insert(questionRecords);
 
@@ -122,8 +122,8 @@ export class TemplateService {
     /**
      * Delete a questionnaire template.
      */
-    static async deleteQuestionnaireTemplate(id: string, userId: string): Promise<void> {
-        const { error } = await supabase
+    static async deleteQuestionnaireTemplate(client: SupabaseClient, id: string, userId: string): Promise<void> {
+        const { error } = await client
             .from("questionnaire_templates")
             .delete()
             .eq("id", id)

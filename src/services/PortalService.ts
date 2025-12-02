@@ -1,219 +1,158 @@
-import { supabase } from "../lib/supabase";
-import type { DocumentType } from "../lib/types";
-import crypto from "crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Client, ClientDocument, ClientAnswer } from "../lib/types";
 
 export class PortalService {
     /**
-     * Validate a portal token and return client data.
+     * Validate a magic link token and return the client.
      */
-    static async validateToken(token: string) {
-        // Get client
-        const { data: client, error: clientError } = await supabase
+    static async validateToken(client: SupabaseClient, token: string): Promise<Client | null> {
+        const { data, error } = await client
             .from("clients")
             .select("*")
             .eq("magic_link_token", token)
             .single();
 
-        if (clientError || !client) {
-            throw new Error("Invalid or expired link");
+        if (error) {
+            console.error("Error validating token:", error);
+            return null;
         }
 
-        // Check if link was already used
-        if (client.link_used) {
-            throw new Error("Link already used");
+        return data as Client;
+    }
+
+    /**
+     * Get client details by ID (for portal use).
+     */
+    static async getClient(client: SupabaseClient, clientId: string): Promise<Client | null> {
+        const { data, error } = await client
+            .from("clients")
+            .select("*")
+            .eq("id", clientId)
+            .single();
+
+        if (error) {
+            console.error("Error fetching client:", error);
+            return null;
         }
 
-        // Get contract template
-        const { data: contractTemplate } = await supabase
+        return data as Client;
+    }
+
+    /**
+     * Get contract template by ID.
+     */
+    static async getContractTemplate(client: SupabaseClient, templateId: string): Promise<any | null> {
+        const { data, error } = await client
             .from("contract_templates")
             .select("*")
-            .eq("id", client.contract_template_id)
+            .eq("id", templateId)
             .single();
 
-        // Get questionnaire with questions
-        const { data: questionnaireData, error: questionnaireError } = await supabase
+        if (error) {
+            console.error("Error fetching contract template:", error);
+            return null;
+        }
+
+        return data;
+    }
+
+    /**
+     * Get questionnaire template by ID with questions.
+     */
+    static async getQuestionnaire(client: SupabaseClient, templateId: string): Promise<any | null> {
+        const { data: template, error } = await client
             .from("questionnaire_templates")
             .select("*")
-            .eq("id", client.questionnaire_template_id)
+            .eq("id", templateId)
             .single();
 
-        if (questionnaireError) {
-            throw new Error(questionnaireError.message);
+        if (error) {
+            console.error("Error fetching questionnaire template:", error);
+            return null;
         }
 
-        // Get questions separately to avoid complex syntax
-        const { data: questions } = await supabase
+        const { data: questions, error: questionsError } = await client
             .from("questions")
-            .select("id, question_text, order_index")
-            .eq("questionnaire_template_id", client.questionnaire_template_id)
+            .select("*")
+            .eq("questionnaire_id", templateId)
             .order("order_index", { ascending: true });
 
-        const questionnaire = {
-            ...questionnaireData,
-            questions: questions || [],
-        };
-
-        // Get profile
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("user_id", client.user_id)
-            .single();
+        if (questionsError) {
+            console.error("Error fetching questions:", questionsError);
+            return null;
+        }
 
         return {
-            client,
-            contract_template: contractTemplate,
-            questionnaire,
-            profile,
+            ...template,
+            questions: questions || [],
         };
     }
 
     /**
-     * Sign the contract.
+     * Submit answers for a client.
      */
-    static async signContract(token: string, signatureData: string, ipAddress: string) {
-        // Get client
-        const { data: client, error: clientError } = await supabase
-            .from("clients")
-            .select("*")
-            .eq("magic_link_token", token)
-            .single();
+    static async submitAnswers(client: SupabaseClient, clientId: string, answers: { question_id: string; answer_text: string }[]): Promise<void> {
+        const records = answers.map((a) => ({
+            client_id: clientId,
+            question_id: a.question_id,
+            answer_text: a.answer_text,
+        }));
 
-        if (clientError || !client) {
-            throw new Error("Invalid token");
+        const { error } = await client
+            .from("client_answers")
+            .insert(records);
+
+        if (error) {
+            console.error("Error submitting answers:", error);
+            throw new Error(error.message);
         }
-
-        // Generate hash of signature for evidence
-        const timestamp = new Date().toISOString();
-        const hash = crypto
-            .createHash("sha256")
-            .update(`${signatureData}${timestamp}${ipAddress}`)
-            .digest("hex");
-
-        // Update client with signature data
-        const { data: updatedClient, error: updateError } = await supabase
-            .from("clients")
-            .update({
-                signature_data: signatureData,
-                signature_timestamp: timestamp,
-                signature_ip: ipAddress,
-                signature_hash: hash,
-            })
-            .eq("id", client.id)
-            .select()
-            .single();
-
-        if (updateError) {
-            throw new Error(updateError.message);
-        }
-
-        return updatedClient;
     }
 
     /**
-     * Upload a document.
+     * Upload a document for a client.
      */
-    static async uploadDocument(token: string, documentType: DocumentType, file: File) {
-        // Get client
-        const { data: client, error: clientError } = await supabase
-            .from("clients")
-            .select("id")
-            .eq("magic_link_token", token)
-            .single();
-
-        if (clientError || !client) {
-            throw new Error("Invalid token");
-        }
-
-        // Upload file
+    static async uploadDocument(client: SupabaseClient, clientId: string, name: string, file: File): Promise<ClientDocument> {
         const fileExt = file.name.split(".").pop();
-        const fileName = `${client.id}-${documentType}-${Date.now()}.${fileExt}`;
-        const filePath = `client-files/${fileName}`;
+        const fileName = `${clientId}/${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-            .from("firm-assets")
+        const { error: uploadError } = await client.storage
+            .from("client-documents")
             .upload(filePath, file);
 
-        if (uploadError) {
-            throw new Error(uploadError.message);
-        }
+        if (uploadError) throw new Error(uploadError.message);
 
-        const { data: urlData } = supabase.storage
-            .from("firm-assets")
+        const { data: urlData } = client.storage
+            .from("client-documents")
             .getPublicUrl(filePath);
 
-        // Create document record
-        const { data: document, error: docError } = await supabase
+        const { data, error } = await client
             .from("client_documents")
             .insert({
-                client_id: client.id,
-                document_type: documentType,
+                client_id: clientId,
+                name,
                 file_url: urlData.publicUrl,
             })
             .select()
             .single();
 
-        if (docError) {
-            throw new Error(docError.message);
-        }
+        if (error) throw new Error(error.message);
 
-        return document;
+        return data as ClientDocument;
     }
 
     /**
-     * Submit questionnaire answers.
+     * Mark client status as completed.
      */
-    static async submitAnswers(token: string, answers: any[]) {
-        // Get client
-        const { data: client, error: clientError } = await supabase
+    static async completeClient(client: SupabaseClient, clientId: string): Promise<void> {
+        const { error } = await client
             .from("clients")
-            .select("id")
-            .eq("magic_link_token", token)
-            .single();
-
-        if (clientError || !client) {
-            throw new Error("Invalid token");
-        }
-
-        // Insert answers
-        const answerRecords = answers.map((answer: any) => ({
-            client_id: client.id,
-            question_id: answer.question_id,
-            answer_text: answer.answer_text,
-        }));
-
-        const { data: savedAnswers, error: answersError } = await supabase
-            .from("client_answers")
-            .insert(answerRecords)
-            .select();
-
-        if (answersError) {
-            throw new Error(answersError.message);
-        }
-
-        return savedAnswers;
-    }
-
-    /**
-     * Complete the portal process.
-     */
-    static async completeProcess(token: string) {
-        // Update client status and mark link as used
-        const { data: client, error } = await supabase
-            .from("clients")
-            .update({
-                status: "completed",
-                link_used: true,
-                completed_at: new Date().toISOString(),
-            })
-            .eq("magic_link_token", token)
-            .select()
-            .single();
+            .update({ status: "completed" })
+            .eq("id", clientId);
 
         if (error) {
+            console.error("Error completing client:", error);
             throw new Error(error.message);
         }
-
-        return client;
     }
 }
