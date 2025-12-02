@@ -1,0 +1,274 @@
+---
+import Layout from "@/layouts/Dashboard.astro";
+import Navigation from "@/components/Navigation.astro";
+import PageHeader from "@/components/ui/PageHeader.astro";
+
+const { user } = Astro.locals;
+
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+
+const url = new URL(Astro.request.url);
+const plan = url.searchParams.get("plan") || "firma";
+const price = url.searchParams.get("price") || "7999";
+const amount = Number(price);
+const amountStr = isFinite(amount) ? amount.toFixed(2) : "7999.00";
+
+// PayPal Sandbox client id (from env)
+const PAYPAL_SANDBOX_CLIENT_ID = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID;
+---
+
+<Layout title="Checkout Membresía">
+  <Navigation currentPage="membresias" />
+
+  <main class="flex-1 ml-60 p-16 max-w-4xl">
+    <PageHeader
+      title="Selecciona método de pago"
+      subtitle={`Plan: ${plan} — ${amountStr} MXN/mes`}
+    />
+
+    <section class="mt-8">
+      <div class="grid md:grid-cols-2 gap-6">
+        <div
+          class="p-6 bg-white border border-border rounded-md flex flex-col items-center justify-center"
+        >
+          <h3 class="mb-4 text-lg font-medium">PayPal (Sandbox)</h3>
+          <p class="text-sm text-content-muted mb-4 text-center">
+            Paga con PayPal en modo Sandbox.
+          </p>
+          <button
+            id="btn-paypal"
+            class="w-full inline-flex items-center justify-center px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-black rounded-md"
+            >Pagar con PayPal</button
+          >
+        </div>
+
+        <div
+          class="p-6 bg-white border border-border rounded-md flex flex-col items-center justify-center"
+        >
+          <h3 class="mb-4 text-lg font-medium">Mercado Pago</h3>
+          <p class="text-sm text-content-muted mb-4 text-center">
+            Redirigir a Mercado Pago / integración pendiente.
+          </p>
+          <a
+            class="w-full inline-flex items-center justify-center px-4 py-3 bg-surface-card border border-border rounded-md hover:bg-surface-muted"
+            href="#"
+            id="btn-mercadopago">Pagar con Mercado Pago</a
+          >
+        </div>
+      </div>
+
+      <div id="paypal-container" class="mt-8" style="display:none;">
+        <h4 class="mb-4">Completa el pago con PayPal</h4>
+        <div id="paypal-button-container"></div>
+        <div id="paypal-status" class="mt-4 text-sm"></div>
+      </div>
+    </section>
+
+    <!-- Cargar SDK de PayPal directamente con client-id correcto -->
+    <script
+      src={`https://www.paypal.com/sdk/js?client-id=${PAYPAL_SANDBOX_CLIENT_ID}&currency=MXN`}
+    ></script>
+
+    <!-- Overlay de procesamiento (mostrado mientras crea/captura) -->
+    <div
+      id="processing-overlay"
+      style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:60; align-items:center; justify-content:center;"
+    >
+      <div
+        style="background:white; padding:20px 28px; border-radius:8px; display:flex; gap:12px; align-items:center;"
+      >
+        <div
+          class="spinner"
+          style="width:28px;height:28px;border:4px solid #e5e7eb;border-top-color:#111827;border-radius:50%; animation:spin 1s linear infinite"
+        >
+        </div>
+        <div id="processing-text" style="font-weight:600;">
+          Procesando pago...
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <!-- Notificación visual para la maestra -->
+    <div
+      id="teacher-notification"
+      style="display:none; position:fixed; top:20px; right:20px; z-index:80; background:#ecfdf5; border:1px solid #10b981; color:#065f46; padding:16px 20px; border-radius:8px; box-shadow:0 8px 24px rgba(2,6,23,0.12); max-width:360px;"
+    >
+      <div
+        id="teacher-notification-content"
+        style="font-weight:600; margin-bottom:8px;"
+      >
+        Pago procesado
+      </div>
+      <div
+        id="teacher-notification-meta"
+        style="font-size:13px; color:#065f46; margin-bottom:12px;"
+      >
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button
+          id="teacher-notification-close"
+          style="background:transparent;border:1px solid #10b981;color:#065f46;padding:6px 10px;border-radius:6px;"
+          >Cerrar</button
+        >
+        <button
+          id="teacher-notification-go"
+          style="background:#10b981;border:none;color:white;padding:6px 10px;border-radius:6px;"
+          >Ir al dashboard</button
+        >
+      </div>
+    </div>
+
+    <script define:vars={{ amountStr }}>
+      const amount = amountStr;
+
+      function ensurePaypalLoaded() {
+        if (window.paypal) return Promise.resolve(window.paypal);
+        return new Promise((resolve, reject) => {
+          const check = () => {
+            if (window.paypal) return resolve(window.paypal);
+            setTimeout(() => check(), 50);
+          };
+          check();
+          // Fallback timeout
+          setTimeout(() => reject(new Error("PayPal SDK no disponible")), 8000);
+        });
+      }
+
+      document
+        .getElementById("btn-paypal")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          document.getElementById("paypal-container").style.display = "block";
+          document.getElementById("btn-paypal").disabled = true;
+
+          try {
+            const paypal = await ensurePaypalLoaded();
+
+            paypal
+              .Buttons({
+                createOrder: function (data, actions) {
+                  // Pedir al servidor que cree la orden de forma segura
+                  return fetch("/api/paypal/create-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ amount }),
+                  })
+                    .then((res) => res.json())
+                    .then((data) => data.id);
+                },
+                onApprove: function (data) {
+                  // Capturar en el servidor
+                  return fetch("/api/paypal/capture-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderID: data.orderID }),
+                  })
+                    .then((res) => res.json())
+                    .then(async (details) => {
+                      const orderId =
+                        details.id ||
+                        details.purchase_units?.[0]?.payments?.captures?.[0]
+                          ?.id;
+                      document.getElementById("paypal-status").innerText =
+                        `Pago completado. ID de orden: ${orderId}`;
+                      // Intentar notificar al servidor y mostrar notificación visual para la maestra
+                      let notified = false;
+                      try {
+                        const r = await fetch("/api/paypal/notify-teacher", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            orderId,
+                            plan: "${plan}",
+                            amount,
+                          }),
+                        });
+                        notified = r.ok;
+                      } catch (e) {
+                        console.error("notify error", e);
+                        notified = false;
+                      }
+
+                      const notifTitle = "Pago procesado";
+                      const notifMeta = notified
+                        ? `Orden: ${orderId} — La maestra ha sido notificada.`
+                        : `Orden: ${orderId} — No se pudo notificar a la maestra.`;
+                      // Mostrar banner visual
+                      const teacherNotif = document.getElementById(
+                        "teacher-notification",
+                      );
+                      const teacherNotifContent = document.getElementById(
+                        "teacher-notification-content",
+                      );
+                      const teacherNotifMeta = document.getElementById(
+                        "teacher-notification-meta",
+                      );
+                      if (
+                        teacherNotif &&
+                        teacherNotifContent &&
+                        teacherNotifMeta
+                      ) {
+                        teacherNotifContent.innerText = notifTitle;
+                        teacherNotifMeta.innerText = notifMeta;
+                        teacherNotif.style.display = "block";
+                        teacherNotif.style.opacity = "0";
+                        teacherNotif.style.transform = "translateY(-6px)";
+                        setTimeout(() => {
+                          teacherNotif.style.opacity = "1";
+                          teacherNotif.style.transform = "translateY(0)";
+                          teacherNotif.style.transition = "all 220ms ease";
+                        }, 10);
+                      }
+
+                      // Redirigir después de dar tiempo a leer
+                      setTimeout(() => {
+                        window.location.href = "/dashboard";
+                      }, 2200);
+                    });
+                },
+                onError: function (err) {
+                  document.getElementById("paypal-status").innerText =
+                    "Ocurrió un error procesando el pago.";
+                  console.error(err);
+                },
+              })
+              .render("#paypal-button-container");
+          } catch (err) {
+            document.getElementById("paypal-status").innerText =
+              "No se pudo cargar la SDK de PayPal.";
+            console.error(err);
+          }
+        });
+
+      document
+        .getElementById("btn-mercadopago")
+        .addEventListener("click", (e) => {
+          e.preventDefault();
+          alert("Integración de Mercado Pago aún no implementada.");
+        });
+
+      // Teacher notification handlers
+      const teacherNotifClose = document.getElementById(
+        "teacher-notification-close",
+      );
+      const teacherNotifGo = document.getElementById("teacher-notification-go");
+      teacherNotifClose?.addEventListener("click", () => {
+        const teacherNotif = document.getElementById("teacher-notification");
+        if (teacherNotif) teacherNotif.style.display = "none";
+      });
+      teacherNotifGo?.addEventListener("click", () => {
+        window.location.href = "/dashboard";
+      });
+    </script>
+  </main>
+</Layout>

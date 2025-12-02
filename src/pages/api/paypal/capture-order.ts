@@ -1,11 +1,15 @@
 import type { APIRoute } from 'astro';
 import paypal from '@paypal/checkout-server-sdk';
 
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || 'Ab6xDxKjzq0DrVOYM6DaMXoNKTzvq4Wt2W8zH5PZW5Gtnlzl6KNsez1vLtlU2rFZypH0P21Sj6WwnUsE';
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || 'EIANihrwedfqYGpCpVp-lX2QVQca1WTshzxZ9itz8MDm6JZeOqXLaa5FSGgtYQMeRiZwkhpHZzVy1Bhi';
+const PAYPAL_CLIENT_ID = import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || import.meta.env.PAYPAL_CLIENT_ID;
+const PAYPAL_CLIENT_SECRET = import.meta.env.PAYPAL_CLIENT_SECRET;
+
+if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+  throw new Error("Missing PayPal credentials");
+}
 
 function paypalClient() {
-  const environment = new paypal.core.SandboxEnvironment(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET);
+  const environment = new paypal.core.SandboxEnvironment(PAYPAL_CLIENT_ID as string, PAYPAL_CLIENT_SECRET as string);
   return new paypal.core.PayPalHttpClient(environment);
 }
 
@@ -17,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const client = paypalClient();
     const captureRequest = new paypal.orders.OrdersCaptureRequest(orderID);
-    captureRequest.requestBody({});
+    captureRequest.requestBody({} as any);
 
     const capture = await client.execute(captureRequest);
     return new Response(JSON.stringify(capture.result), { status: 200, headers: { 'Content-Type': 'application/json' } });
